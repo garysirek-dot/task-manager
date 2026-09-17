@@ -368,7 +368,7 @@ const PINNED_SECTION_COLOR = '#1E7FB0';
 const PALETTE = ['#38b6ff', '#2bf645', '#ff38D3', '#f8fd11', '#ff8d08'];
 function getDayColor(day){
   const key = (day.label || '').trim().toUpperCase();
-  if(key === 'DATES' || key === 'LISTS') return PINNED_SECTION_COLOR;
+  if(key === 'DATES' || key === 'LISTS' || key === 'TASKS') return PINNED_SECTION_COLOR;
   return day.color || DEFAULT_SECTION_COLOR;
 }
 function getContrastTextColor(hex){
@@ -378,7 +378,7 @@ function getContrastTextColor(hex){
 }
 
 function defaultData(){
-  const dayNames = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'DATES', 'LISTS'];
+  const dayNames = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'TASKS', 'DATES', 'LISTS'];
   const days = dayNames.map(name => ({ id: uid(), label: name, tasks: [] }));
   return { days, trash: [] };
 }
@@ -392,8 +392,10 @@ async function load(){
   }
   if(!Array.isArray(data.trash)) data.trash = [];
   data.days.forEach(d=>{
-    if((d.label || '').trim().toUpperCase() === 'NEW') d.label = 'BASECAMP';
+    const key = (d.label || '').trim().toUpperCase();
+    if(key === 'NEW' || key === 'BASECAMP') d.label = 'TASKS';
   });
+  ensureTasksSection();
   document.getElementById('appTitle').textContent = data.appTitle || todaysDateTitle();
   render();
   renderTrash();
@@ -814,7 +816,7 @@ function render(){
   const todayIdxNow = new Date().getDay();
   const visibleDays = data.days.filter(day => {
     const key = (day.label || '').trim().toUpperCase();
-    if(key === 'DATES' || key === 'LISTS') return true;
+    if(key === 'DATES' || key === 'LISTS' || key === 'TASKS') return true;
     if(WEEKDAYS.includes(key)){
       const rank = weekdayRank(key, todayIdxNow);
       return rank <= 2 || data.showEmptyDays;
@@ -830,7 +832,7 @@ function render(){
     dayEl.dataset.dayId = day.id;
     const bgColor = getDayColor(day);
     const sectionLabel = (day.label || '').trim().toUpperCase();
-    const isOldBarStyle = sectionLabel === 'DATES' || sectionLabel === 'LISTS';
+    const isOldBarStyle = sectionLabel === 'DATES' || sectionLabel === 'LISTS' || sectionLabel === 'TASKS';
     const isDatesSection = sectionLabel === 'DATES';
     const isListsSection = sectionLabel === 'LISTS';
     const isWeekday = WEEKDAYS.includes(sectionLabel);
@@ -1385,26 +1387,25 @@ function addDayFromInput(){
   document.getElementById('dayForm').classList.add('hidden');
 }
 
-function ensureNewSectionAtTop(){
-  const idx = data.days.findIndex(d => ['NEW', 'BASECAMP'].includes((d.label || '').trim().toUpperCase()));
-  let newSection;
-  if(idx > -1){
-    newSection = data.days.splice(idx, 1)[0];
-  } else {
-    newSection = { id: uid(), label: 'BASECAMP', tasks: [] };
+function ensureTasksSection(){
+  let section = data.days.find(d => (d.label || '').trim().toUpperCase() === 'TASKS');
+  if(!section){
+    section = { id: uid(), label: 'TASKS', tasks: [] };
+    const datesIdx = data.days.findIndex(d => (d.label || '').trim().toUpperCase() === 'DATES');
+    if(datesIdx > -1){ data.days.splice(datesIdx, 0, section); }
+    else { data.days.push(section); }
   }
-  data.days.unshift(newSection);
-  recentlyAddedDayIds.add(newSection.id);
-  return newSection;
+  return section;
 }
 
 document.getElementById('fabAdd').addEventListener('click', ()=>{
-  const section = ensureNewSectionAtTop();
+  const section = ensureTasksSection();
   save();
   render();
-  const ul = document.querySelector('.day[data-day-id="' + section.id + '"] > .task-list');
+  const dayEl = document.querySelector('.day[data-day-id="' + section.id + '"]');
+  const ul = dayEl ? dayEl.querySelector(':scope > .task-list') : null;
   if(ul) startInlineAdd(ul, null, section.id);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if(dayEl) dayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 document.getElementById('trashBtn').addEventListener('click', ()=>{
@@ -1435,7 +1436,7 @@ document.getElementById('eyeBtn').addEventListener('click', ()=>{
       const d = data.days.find(x => x.id === el.dataset.dayId);
       if(!d) return false;
       const key = (d.label || '').trim().toUpperCase();
-      if(key === 'DATES' || key === 'LISTS') return false;
+      if(key === 'DATES' || key === 'LISTS' || key === 'TASKS') return false;
       if(WEEKDAYS.includes(key)) return weekdayRank(key, todayIdxNow) > 2;
       return !(d.tasks && d.tasks.some(t => !t.done || (t.subtasks && t.subtasks.length > 0)));
     });
