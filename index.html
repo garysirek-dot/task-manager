@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Tasks</title>
+<style>
+  :root{
+    --bg:#0D0D0D;
+    --surface:#161616;
+    --line:#232323;
+    --text:#EAE7E1;
+    --text-dim:#7C7A76;
+    --accent:#38b6ff;
+    --danger:#8a6f5a;
+    --done:#4c4a46;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    overflow-x:hidden;max-width:100vw;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Helvetica,Arial,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    padding-bottom:60px;
+  }
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px 10px;position:sticky;top:0;background:var(--bg);z-index:5;
+    border-bottom:1px solid var(--line);
+  }
+  header h1{font-size:16px;font-weight:600;margin:0;letter-spacing:0.2px;outline:none;cursor:text;min-width:20px;}
+  .hero-banner{width:100%;height:76px;overflow:hidden;line-height:0;}
+  .hero-banner svg{display:block;width:100%;height:100%;}
+  #addDayBtn{background:none;border:1px solid var(--line);color:var(--accent);font-size:12px;padding:5px 10px;border-radius:7px;}
+  #addDayBtn:active{background:var(--surface);}
+
+  #dayForm{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);}
+  #dayForm input{flex:1;background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 9px;font-size:13px;}
+  #dayForm button{background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 11px;font-size:12px;}
+  .hidden{display:none !important;}
+
+  .day{border-bottom:22px solid var(--bg);border-left:4px solid transparent;background:var(--bg);}
+  .day-header{
+    display:flex;flex-direction:column;gap:6px;
+    padding:8px 16px 6px;margin-bottom:2px;
+  }
+  .day-header.basecamp-header{background:var(--surface);}
+  .header-top-row{display:flex;align-items:center;justify-content:space-between;}
+  .basecamp-title{
+    font-size:15px;font-weight:800;letter-spacing:0.5px;color:#fff;
+    white-space:nowrap;flex-shrink:0;outline:none;
+  }
+  .section-date-tag{
+    font-size:11px;font-weight:600;letter-spacing:0.4px;color:rgba(255,255,255,0.55);
+    white-space:nowrap;flex-shrink:0;
+  }
+  .header-underline{height:1px;width:100%;background:#fff;opacity:0.85;}
+  .day-header .label{
+    font-size:12.5px;font-weight:700;letter-spacing:0.4px;color:inherit;
+    outline:none;min-width:20px;
+  }
+  .day-drag-handle{
+    color:inherit;opacity:0.75;font-size:20px;margin-left:8px;flex-shrink:0;
+    touch-action:none;line-height:1;padding:4px;
+  }
+  #eyeBtn.active svg{color:var(--accent);}
+  .day-header .count{font-size:11px;color:inherit;opacity:0.75;}
+  .swatch-btn{
+    width:16px;height:16px;border-radius:4px;border:1.5px solid var(--text-dim);
+    background:var(--surface);flex-shrink:0;margin-left:8px;opacity:0.9;
+  }
+  .collapse-toggle{
+    width:22px;flex-shrink:0;font-size:17px;color:var(--text-dim);
+    display:flex;align-items:center;justify-content:center;padding:2px;
+    transition:transform 0.15s ease;
+  }
+  .collapse-toggle.is-collapsed{transform:rotate(-90deg);}
+
+  .color-picker{display:flex;flex-wrap:wrap;gap:8px;padding:8px 16px;background:var(--surface);}
+  .color-picker .swatch{width:22px;height:22px;border-radius:5px;border:2px solid transparent;}
+  .color-picker .swatch.selected{border-color:#fff;}
+
+  .completed-section{border-top:1px solid var(--line);}
+  .completed-header{
+    display:flex;align-items:center;gap:6px;padding:8px 16px;color:var(--text-dim);
+    font-size:11.5px;font-weight:600;
+  }
+  .completed-header .collapse-toggle{color:var(--text-dim);}
+  ul.completed-list{list-style:none;margin:0;padding:0;}
+  ul.completed-list.hidden{display:none;}
+
+  ul.task-list, ul.subtask-list{list-style:none;margin:0;padding:0;min-height:6px;background:var(--bg);}
+  ul.subtask-list{padding-left:34px;}
+  ul.subtask-list.collapsed{display:none;}
+
+  li.task{background:var(--bg);}
+  li.task.inline-add{border-bottom:none;}
+
+  .row-wrap{position:relative;overflow:hidden;background:var(--bg);}
+  .row-delete-bg{
+    position:absolute;inset:0;background:#B23B3B;color:#fff;font-size:13px;font-weight:600;
+    display:flex;align-items:center;justify-content:flex-end;padding-right:22px;opacity:0;
+  }
+
+  .task-row{display:flex;align-items:center;gap:7px;padding:1px 16px;min-height:20px;
+    background:var(--bg);position:relative;touch-action:pan-y;}
+  .subtask > .row-wrap > .task-row{padding:0px 16px 0px 0;min-height:16px;}
+
+  .checkbox{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--text-dim);flex-shrink:0;}
+  .checkbox-hit{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:9px;margin:-9px;}
+  .task.done > .row-wrap > .task-row .checkbox{background:var(--accent);border-color:var(--accent);}
+  .task.done > .row-wrap > .task-row .task-text{color:var(--done);text-decoration:line-through;}
+
+  .task-text{flex:1;font-size:13.5px;line-height:1.3;outline:none;word-break:break-word;}
+  .subtask .task-text{font-size:12.5px;font-weight:400;cursor:pointer;}
+  .priority-badge{
+    display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    border:1.5px solid currentColor;border-radius:4px;padding:1px 6px;
+    font-size:9.5px;font-weight:800;letter-spacing:0.5px;background:transparent;white-space:nowrap;
+  }
+  .date-badge-wrap{position:relative;display:inline-flex;flex-shrink:0;margin-right:2px;}
+  .date-badge{
+    display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;pointer-events:none;
+    border:1.5px solid var(--text-dim);border-radius:4px;padding:1px 6px;
+    font-size:9.5px;font-weight:800;letter-spacing:0.5px;background:transparent;white-space:nowrap;
+    color:var(--text-dim);
+  }
+  .date-badge.empty{opacity:0.6;font-weight:700;}
+  .date-input-overlay{
+    position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;
+    -webkit-appearance:none;appearance:none;
+  }
+  .task.has-subtasks > .row-wrap > .task-row{cursor:pointer;}
+  .task-collapse-arrow{
+    background:none;border:none;color:var(--text-dim);font-size:19px;font-weight:700;
+    padding:1px 8px;flex-shrink:0;line-height:1;transition:transform 0.15s ease;transform:rotate(90deg);
+  }
+  .task-collapse-arrow.is-collapsed{transform:rotate(0deg);}
+
+  .drag-handle{color:var(--text-dim);font-size:22px;padding:2px 8px;flex-shrink:0;touch-action:none;line-height:1;}
+  .icon-btn{background:none;border:none;color:var(--accent);font-size:22px;padding:1px 8px;flex-shrink:0;line-height:1;}
+  .add-sub-btn{margin-right:22px;}
+
+  .add-task-row{padding:6px 16px 4px;}
+  .add-task-row button{background:none;border:none;color:var(--accent);font-size:20px;font-weight:600;padding:4px 0;}
+
+  .sortable-ghost{opacity:0.3;}
+  .sortable-chosen .task-row{background:rgba(212,162,76,0.08);}
+  .sortable-drag .task-row{background:var(--surface);}
+
+  input::placeholder{color:var(--text-dim);}
+
+  body{padding-bottom:76px;}
+
+  #bottomBar{
+    position:fixed;left:0;right:0;bottom:0;height:64px;
+    background:var(--surface);border-top:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;z-index:20;
+  }
+  .bottom-bar-left{display:flex;align-items:center;gap:14px;}
+  #trashBtn, #completedBtn, #eyeBtn{
+    background:none;border:none;color:var(--text-dim);padding:8px;
+    position:relative;line-height:1;display:flex;align-items:center;justify-content:center;
+  }
+  #trashBadge, #completedBadge, #eyeBadge{
+    position:absolute;top:0;right:0;min-width:16px;height:16px;border-radius:8px;
+    background:#B23B3B;color:#fff;font-size:10px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;padding:0 3px;
+  }
+  #fabAdd{
+    width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;
+    border:none;font-size:26px;font-weight:600;display:flex;align-items:center;justify-content:center;
+    line-height:1;box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  }
+  #fabAdd:active{transform:scale(0.94);}
+
+  .side-panel{
+    position:fixed;inset:0;background:var(--bg);z-index:30;
+    display:flex;flex-direction:column;transform:translateY(100%);
+    transition:transform 0.2s ease;
+  }
+  .side-panel.open{transform:translateY(0);}
+  .trash-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--line);
+  }
+  .trash-header h2{font-size:15px;margin:0;font-weight:600;}
+  .trash-header-actions{display:flex;align-items:center;gap:14px;}
+  #trashEmptyBtn{background:none;border:1px solid var(--line);color:var(--text-dim);font-size:12px;padding:5px 10px;border-radius:6px;}
+  #trashCloseBtn, #completedCloseBtn{background:none;border:none;color:var(--text-dim);font-size:22px;padding:2px 4px;}
+  .trash-list{flex:1;overflow-y:auto;padding:4px 0;}
+  .trash-item{padding:10px 16px;border-bottom:1px solid var(--line);}
+  .trash-item .t-text{font-size:13.5px;color:var(--text);word-break:break-word;}
+  .trash-item .t-meta{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .trash-item .t-actions{display:flex;gap:18px;margin-top:6px;}
+  .trash-item .t-actions button{background:none;border:none;color:var(--accent);font-size:12.5px;padding:0;}
+  .trash-item .t-actions button.forever{color:#C1584A;}
+  .trash-empty-msg{padding:40px 16px;text-align:center;color:var(--text-dim);font-size:13px;}
+
+  .note-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin:0 2px;}
+
+  .detail-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;}
+  #detailNotes{
+    width:100%;min-height:110px;background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    color:var(--text);font-size:14px;font-family:inherit;padding:10px;resize:vertical;outline:none;box-sizing:border-box;
+  }
+  .detail-section-label{font-size:11px;font-weight:700;letter-spacing:0.5px;color:var(--text-dim);text-transform:uppercase;}
+  .detail-recurring-row{display:flex;align-items:center;justify-content:space-between;}
+  .toggle-switch{
+    width:44px;height:24px;border-radius:12px;background:var(--line);border:none;
+    position:relative;padding:0;flex-shrink:0;transition:background 0.15s ease;
+  }
+  .toggle-switch.on{background:var(--accent);}
+  .toggle-knob{
+    position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:#fff;transition:transform 0.15s ease;
+  }
+  .toggle-switch.on .toggle-knob{transform:translateX(20px);}
+  .recurring-mark{color:var(--accent);font-size:12px;flex-shrink:0;}
+  #detailAddChecklistBtn{
+    align-self:flex-start;background:none;border:1px solid var(--line);color:var(--accent);
+    font-size:12.5px;padding:7px 12px;border-radius:7px;
+  }
+  .checklist-list{list-style:none;margin:0;padding:0;}
+  .checklist-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);}
+  .checklist-item .checkbox{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--text-dim);flex-shrink:0;}
+  .checklist-item.done .checkbox{background:var(--accent);border-color:var(--accent);}
+  .checklist-item.done .c-text{color:var(--done);text-decoration:line-through;}
+  .checklist-item .c-text{flex:1;font-size:13.5px;outline:none;word-break:break-word;}
+  .checklist-item .c-del{background:none;border:none;color:var(--text-dim);font-size:18px;padding:0 4px;line-height:1;}
+  #detailAddChecklistItemBtn{background:none;border:none;color:var(--accent);font-size:13px;padding:8px 0 0;text-align:left;}
+</style>
+</head>
+<body>
+<div class="hero-banner">
+  <svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="1200" height="200" fill="#0A1F2B"/>
+    <circle cx="1080" cy="50" r="22" fill="#CFEFFF" opacity="0.85"/>
+    <polygon points="0,200 0,150 100,110 220,150 340,90 460,140 600,100 760,150 900,110 1040,150 1200,120 1200,200" fill="#9FDBFF" opacity="0.9"/>
+    <polygon points="0,200 0,170 150,120 300,160 420,100 560,150 700,110 850,160 1000,120 1150,155 1200,140 1200,200" fill="#5AC8FF"/>
+    <polygon points="0,200 0,190 120,140 260,180 400,130 540,175 680,135 820,180 960,140 1100,178 1200,160 1200,200" fill="#1E7FB0"/>
+  </svg>
+</div>
+<div id="app">
+  <header>
+    <h1 id="appTitle" contenteditable="true" spellcheck="false"></h1>
+    <button id="addDayBtn">+ Section</button>
+  </header>
+  <div id="dayForm" class="hidden">
+    <input id="newDayInput" placeholder="Section name (e.g. Rocks, Trip, Activities)">
+    <button id="confirmDayBtn">Add</button>
+    <button id="cancelDayBtn">Cancel</button>
+  </div>
+  <div id="days"></div>
+</div>
+
+<div id="bottomBar">
+  <div class="bottom-bar-left">
+    <button id="trashBtn" title="Deleted tasks">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 7h16"/>
+        <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
+        <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/>
+        <path d="M10 11v6"/>
+        <path d="M14 11v6"/>
+      </svg>
+      <span id="trashBadge" class="hidden">0</span>
+    </button>
+    <button id="completedBtn" title="Completed tasks">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3.5" y="3.5" width="17" height="17" rx="4"/>
+        <path d="M7.5 12.5l3 3 6-6.5"/>
+      </svg>
+      <span id="completedBadge" class="hidden">0</span>
+    </button>
+    <button id="eyeBtn" title="Show/hide empty sections">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <span id="eyeBadge" class="hidden">0</span>
+    </button>
+  </div>
+  <button id="fabAdd" title="Add task">+</button>
+</div>
+
+<div id="trashPanel" class="side-panel">
+  <div class="trash-header">
+    <h2>Deleted Tasks</h2>
+    <div class="trash-header-actions">
+      <button id="trashEmptyBtn">Empty</button>
+      <button id="trashCloseBtn">×</button>
+    </div>
+  </div>
+  <div class="trash-list" id="trashList"></div>
+</div>
+
+<div id="completedPanel" class="side-panel">
+  <div class="trash-header">
+    <h2>Completed Tasks</h2>
+    <div class="trash-header-actions">
+      <button id="completedCloseBtn">×</button>
+    </div>
+  </div>
+  <div class="trash-list" id="completedList"></div>
+</div>
+
+<div id="detailPanel" class="side-panel">
+  <div class="trash-header">
+    <h2 id="detailTitle" contenteditable="true" spellcheck="false">Task</h2>
+    <div class="trash-header-actions">
+      <button id="detailCloseBtn">×</button>
+    </div>
+  </div>
+  <div class="detail-body">
+    <div class="detail-recurring-row">
+      <span class="detail-section-label">Repeat Daily</span>
+      <button id="detailRecurringToggle" class="toggle-switch"><span class="toggle-knob"></span></button>
+    </div>
+    <div>
+      <div class="detail-section-label">Notes</div>
+      <textarea id="detailNotes" placeholder="Add notes..." style="margin-top:8px;"></textarea>
+    </div>
+    <div id="detailChecklistSection" class="hidden">
+      <div class="detail-section-label">Checklist</div>
+      <ul class="checklist-list" id="detailChecklist" style="margin-top:8px;"></ul>
+      <button id="detailAddChecklistItemBtn">+ Add item</button>
+    </div>
+    <button id="detailAddChecklistBtn">+ Add checklist</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+const STORAGE_KEY = 'tasks-data-v1';
+let data = { days: [] };
+
+function uid(){ return Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4); }
+
+function todaysDateTitle(){
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const d = new Date();
+  return months[d.getMonth()] + ' ' + d.getDate();
+}
+
+function formatDateBadge(iso){
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const parts = (iso || '').split('-').map(Number);
+  if(parts.length !== 3 || !parts[1]) return '';
+  return months[parts[1] - 1] + ' ' + parts[2];
+}
+
+function preventIOSZoom(el){
+  el.addEventListener('focus', ()=>{
+    el.dataset.origFontSize = getComputedStyle(el).fontSize;
+    el.style.fontSize = '16px';
+  });
+  el.addEventListener('blur', ()=>{
+    el.style.fontSize = el.dataset.origFontSize || '';
+  });
+}
+
+const DEFAULT_SECTION_COLOR = '#38b6ff';
+const PALETTE = ['#38b6ff', '#2bf645', '#ff38D3', '#f8fd11', '#ff8d08'];
+function getDayColor(day){
+  return day.color || DEFAULT_SECTION_COLOR;
+}
+function getContrastTextColor(hex){
+  const key = (hex || '').toLowerCase();
+  const lightColors = ['#f8fd11', '#ffffff', '#fff', '#ffff00'];
+  return lightColors.includes(key) ? '#141414' : '#ffffff';
+}
+
+function defaultData(){
+  const dayNames = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'DATES', 'LISTS'];
+  const days = dayNames.map(name => ({ id: uid(), label: name, tasks: [] }));
+  return { days, trash: [] };
+}
+
+async function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    data = raw ? JSON.parse(raw) : defaultData();
+  }catch(e){
+    data = defaultData();
+  }
+  if(!Array.isArray(data.trash)) data.trash = [];
+  data.days.forEach(d=>{
+    if((d.label || '').trim().toUpperCase() === 'NEW') d.label = 'BASECAMP';
+  });
+  document.getElementById('appTitle').textContent = data.appTitle || todaysDateTitle();
+  render();
+  renderTrash();
+  renderCompleted();
+}
+
+const appTitleEl = document.getElementById('appTitle');
+appTitleEl.textContent = todaysDateTitle();
+appTitleEl.addEventListener('blur', ()=>{
+  const val = appTitleEl.textContent.trim();
+  data.appTitle = val || todaysDateTitle();
+  appTitleEl.textContent = data.appTitle;
+  save();
+});
+appTitleEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); appTitleEl.blur(); } });
+preventIOSZoom(appTitleEl);
+
+let saveTimer = null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    catch(e){ console.error('save failed', e); }
+  }, 250);
+}
+
+function findTaskById(id){
+  for(const day of data.days){ for(const t of day.tasks){ if(t.id===id) return t; } }
+  return null;
+}
+function findSubtaskAnywhere(id){
+  for(const day of data.days){
+    for(const t of day.tasks){
+      for(const s of (t.subtasks||[])){ if(s.id===id) return s; }
+    }
+  }
+  return null;
+}
+function deleteTaskToTrash(id){
+  for(const day of data.days){
+    const idx = day.tasks.findIndex(t => t.id === id);
+    if(idx > -1){
+      const [removed] = day.tasks.splice(idx, 1);
+      data.trash.unshift({
+        id: uid(), removedAt: Date.now(), dayId: day.id, dayLabel: day.label,
+        parentTaskId: null, parentTaskText: null, task: removed
+      });
+      return;
+    }
+    for(const t of day.tasks){
+      const sIdx = (t.subtasks || []).findIndex(s => s.id === id);
+      if(sIdx > -1){
+        const [removed] = t.subtasks.splice(sIdx, 1);
+        data.trash.unshift({
+          id: uid(), removedAt: Date.now(), dayId: day.id, dayLabel: day.label,
+          parentTaskId: t.id, parentTaskText: t.text, task: removed
+        });
+        return;
+      }
+    }
+  }
+}
+
+function restoreTrashItem(trashId){
+  const idx = data.trash.findIndex(e => e.id === trashId);
+  if(idx === -1) return;
+  const entry = data.trash[idx];
+  const day = data.days.find(d => d.id === entry.dayId);
+  if(day){
+    const parent = entry.parentTaskId ? day.tasks.find(t => t.id === entry.parentTaskId) : null;
+    if(parent){
+      parent.subtasks = parent.subtasks || [];
+      parent.subtasks.push(entry.task);
+    } else {
+      day.tasks.push(entry.task);
+    }
+  }
+  data.trash.splice(idx, 1);
+  save(); render(); renderTrash();
+}
+
+function deleteForever(trashId){
+  data.trash = data.trash.filter(e => e.id !== trashId);
+  save(); renderTrash();
+}
+
+function emptyTrash(){
+  data.trash = [];
+  save(); renderTrash();
+}
+
+function timeAgo(ts){
+  const diff = Math.max(0, Date.now() - ts);
+  const mins = Math.floor(diff / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+function renderTrash(){
+  const badge = document.getElementById('trashBadge');
+  if(data.trash.length){
+    badge.textContent = String(data.trash.length);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+
+  const list = document.getElementById('trashList');
+  list.innerHTML = '';
+  if(!data.trash.length){
+    const msg = document.createElement('div');
+    msg.className = 'trash-empty-msg';
+    msg.textContent = 'No deleted tasks.';
+    list.appendChild(msg);
+    return;
+  }
+  data.trash.forEach(entry=>{
+    const item = document.createElement('div');
+    item.className = 'trash-item';
+
+    const text = document.createElement('div');
+    text.className = 't-text';
+    text.textContent = entry.task.text;
+    item.appendChild(text);
+
+    const meta = document.createElement('div');
+    meta.className = 't-meta';
+    meta.textContent = (entry.parentTaskText ? ('Subtask of "' + entry.parentTaskText + '" · ') : '')
+      + entry.dayLabel + ' · ' + timeAgo(entry.removedAt);
+    item.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 't-actions';
+    const restoreBtn = document.createElement('button');
+    restoreBtn.textContent = 'Restore';
+    restoreBtn.addEventListener('click', ()=> restoreTrashItem(entry.id));
+    actions.appendChild(restoreBtn);
+    const foreverBtn = document.createElement('button');
+    foreverBtn.className = 'forever';
+    foreverBtn.textContent = 'Delete forever';
+    foreverBtn.addEventListener('click', ()=> deleteForever(entry.id));
+    actions.appendChild(foreverBtn);
+    item.appendChild(actions);
+
+    list.appendChild(item);
+  });
+}
+
+function getCompletedEntries(){
+  const entries = [];
+  data.days.forEach(day=>{
+    day.tasks.forEach(task=>{
+      if(task.done && !(task.subtasks && task.subtasks.length)){
+        entries.push({ text: task.text, dayLabel: day.label, parentText: null, ref: task });
+      }
+      (task.subtasks || []).forEach(sub=>{
+        if(sub.done){
+          entries.push({ text: sub.text, dayLabel: day.label, parentText: task.text, ref: sub });
+        }
+      });
+    });
+  });
+  return entries;
+}
+
+function renderCompleted(){
+  const entries = getCompletedEntries();
+  const badge = document.getElementById('completedBadge');
+  if(entries.length){
+    badge.textContent = String(entries.length);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+
+  const list = document.getElementById('completedList');
+  list.innerHTML = '';
+  if(!entries.length){
+    const msg = document.createElement('div');
+    msg.className = 'trash-empty-msg';
+    msg.textContent = 'No completed tasks yet.';
+    list.appendChild(msg);
+    return;
+  }
+  entries.forEach(entry=>{
+    const item = document.createElement('div');
+    item.className = 'trash-item';
+
+    const text = document.createElement('div');
+    text.className = 't-text';
+    text.textContent = entry.text;
+    item.appendChild(text);
+
+    const meta = document.createElement('div');
+    meta.className = 't-meta';
+    meta.textContent = (entry.parentText ? ('Subtask of "' + entry.parentText + '" · ') : '') + entry.dayLabel;
+    item.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 't-actions';
+    const uncheckBtn = document.createElement('button');
+    uncheckBtn.textContent = 'Uncheck';
+    uncheckBtn.addEventListener('click', ()=>{
+      entry.ref.done = false;
+      save(); render(); renderCompleted();
+    });
+    actions.appendChild(uncheckBtn);
+    item.appendChild(actions);
+
+    list.appendChild(item);
+  });
+}
+
+let currentDetailSub = null;
+
+function openDetail(sub){
+  currentDetailSub = sub;
+  renderDetailPanel();
+  document.getElementById('detailPanel').classList.add('open');
+}
+function closeDetail(){
+  document.getElementById('detailPanel').classList.remove('open');
+  currentDetailSub = null;
+}
+
+function renderDetailPanel(){
+  if(!currentDetailSub) return;
+  const sub = currentDetailSub;
+  const titleEl = document.getElementById('detailTitle');
+  if(document.activeElement !== titleEl) titleEl.textContent = sub.text || 'Subtask';
+
+  document.getElementById('detailRecurringToggle').classList.toggle('on', !!sub.recurring);
+
+  const notes = document.getElementById('detailNotes');
+  if(document.activeElement !== notes) notes.value = sub.notes || '';
+
+  const hasChecklist = Array.isArray(sub.checklist);
+  document.getElementById('detailChecklistSection').classList.toggle('hidden', !hasChecklist);
+  document.getElementById('detailAddChecklistBtn').classList.toggle('hidden', hasChecklist);
+
+  const list = document.getElementById('detailChecklist');
+  list.innerHTML = '';
+  if(hasChecklist){
+    sub.checklist.forEach(item=>{
+      const li = document.createElement('li');
+      li.className = 'checklist-item' + (item.done ? ' done' : '');
+
+      const cb = document.createElement('span');
+      cb.className = 'checkbox';
+      cb.addEventListener('click', ()=>{
+        item.done = !item.done; save(); render(); renderDetailPanel();
+      });
+      li.appendChild(cb);
+
+      const text = document.createElement('span');
+      text.className = 'c-text';
+      text.contentEditable = true;
+      text.textContent = item.text;
+      text.addEventListener('blur', ()=>{ item.text = text.textContent.trim(); save(); render(); });
+      text.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); text.blur(); } });
+      preventIOSZoom(text);
+      li.appendChild(text);
+
+      const del = document.createElement('button');
+      del.className = 'c-del';
+      del.textContent = '×';
+      del.addEventListener('click', ()=>{
+        sub.checklist = sub.checklist.filter(i => i.id !== item.id);
+        save(); render(); renderDetailPanel();
+      });
+      li.appendChild(del);
+
+      list.appendChild(li);
+    });
+  }
+}
+
+document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
+
+const detailTitleEl = document.getElementById('detailTitle');
+preventIOSZoom(detailTitleEl);
+detailTitleEl.addEventListener('blur', ()=>{
+  if(!currentDetailSub) return;
+  const val = detailTitleEl.textContent.trim();
+  currentDetailSub.text = val || currentDetailSub.text;
+  save(); render(); renderDetailPanel();
+});
+detailTitleEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); detailTitleEl.blur(); } });
+
+const detailNotesEl = document.getElementById('detailNotes');
+preventIOSZoom(detailNotesEl);
+detailNotesEl.addEventListener('input', ()=>{
+  if(currentDetailSub){ currentDetailSub.notes = detailNotesEl.value; save(); }
+});
+detailNotesEl.addEventListener('blur', ()=>{ render(); });
+
+document.getElementById('detailRecurringToggle').addEventListener('click', ()=>{
+  if(!currentDetailSub) return;
+  currentDetailSub.recurring = !currentDetailSub.recurring;
+  save(); render(); renderDetailPanel();
+});
+
+document.getElementById('detailAddChecklistBtn').addEventListener('click', ()=>{
+  if(!currentDetailSub) return;
+  currentDetailSub.checklist = [];
+  save(); render(); renderDetailPanel();
+});
+
+document.getElementById('detailAddChecklistItemBtn').addEventListener('click', ()=>{
+  if(!currentDetailSub) return;
+  const list = document.getElementById('detailChecklist');
+  const li = document.createElement('li');
+  li.className = 'checklist-item';
+  const input = document.createElement('input');
+  input.placeholder = 'New item';
+  input.style.cssText = 'flex:1;background:none;border:none;color:var(--text);font-size:13.5px;outline:none;';
+  preventIOSZoom(input);
+  li.appendChild(input);
+  list.appendChild(li);
+  input.focus();
+  let committed = false;
+  function commit(){
+    if(committed) return;
+    committed = true;
+    const val = input.value.trim();
+    if(val){
+      currentDetailSub.checklist.push({ id: uid(), text: val, done: false });
+      save(); render(); renderDetailPanel();
+    } else {
+      li.remove();
+    }
+  }
+  input.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ commit(); }
+    if(e.key==='Escape'){ committed = true; li.remove(); }
+  });
+  input.addEventListener('blur', commit);
+});
+
+const recentlyAddedDayIds = new Set();
+let daysSortable = null;
+
+const WEEKDAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+const MONTH_ABBR = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+function weekdayRank(name, todayIdx){
+  const idx = WEEKDAYS.indexOf(name);
+  if(idx === -1) return null;
+  return (idx - todayIdx + 7) % 7;
+}
+
+function getWeekdaySectionDateLabel(label){
+  const key = (label || '').trim().toUpperCase();
+  const rank = weekdayRank(key, new Date().getDay());
+  if(rank === null) return null;
+  const d = new Date();
+  d.setDate(d.getDate() + rank);
+  return MONTH_ABBR[d.getMonth()] + ' ' + d.getDate();
+}
+
+function todayDateString(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function checkDailyReset(){
+  const today = todayDateString();
+  if(data.lastResetDate === today) return false;
+  data.days.forEach(day=>{
+    day.tasks.forEach(task=>{
+      if(task.recurring && task.done) task.done = false;
+      (task.subtasks || []).forEach(sub=>{
+        if(sub.recurring && sub.done) sub.done = false;
+      });
+    });
+  });
+  data.lastResetDate = today;
+  return true;
+}
+
+function updateEyeButton(hiddenCount){
+  const btn = document.getElementById('eyeBtn');
+  const badge = document.getElementById('eyeBadge');
+  btn.classList.toggle('active', data.showEmptyDays);
+  btn.title = data.showEmptyDays ? 'Hide empty sections' : 'Show empty sections';
+  if(hiddenCount > 0){
+    badge.textContent = String(hiddenCount);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function reorderWeekdaySections(){
+  const todayIdx = new Date().getDay();
+  const weekdaySlots = [];
+  data.days.forEach((d, i)=>{
+    if(WEEKDAYS.includes((d.label || '').trim().toUpperCase())) weekdaySlots.push(i);
+  });
+  if(weekdaySlots.length < 2) return;
+
+  const dayObjs = weekdaySlots.map(i => data.days[i]);
+  dayObjs.sort((a, b)=> weekdayRank(a.label.trim().toUpperCase(), todayIdx) - weekdayRank(b.label.trim().toUpperCase(), todayIdx));
+  weekdaySlots.forEach((slotIdx, k)=>{ data.days[slotIdx] = dayObjs[k]; });
+}
+
+function render(){
+  if(checkDailyReset()) save();
+  reorderWeekdaySections();
+  const container = document.getElementById('days');
+  container.innerHTML = '';
+
+  const visibleDays = data.days.filter(day =>
+    (day.tasks && day.tasks.some(t => !t.done || (t.subtasks && t.subtasks.length > 0))) ||
+    recentlyAddedDayIds.has(day.id) || data.showEmptyDays
+  );
+  const hiddenCount = data.days.length - visibleDays.length;
+
+  visibleDays.forEach(day=>{
+    const dayEl = document.createElement('div');
+    dayEl.className = 'day';
+    dayEl.dataset.dayId = day.id;
+    const bgColor = getDayColor(day);
+    const sectionLabel = (day.label || '').trim().toUpperCase();
+    const isOldBarStyle = sectionLabel === 'DATES' || sectionLabel === 'LISTS';
+    const isDatesSection = sectionLabel === 'DATES';
+    const isListsSection = sectionLabel === 'LISTS';
+    dayEl.style.borderLeftColor = isOldBarStyle ? 'transparent' : bgColor;
+
+    const header = document.createElement('div');
+    header.className = 'day-header' + (isOldBarStyle ? '' : ' basecamp-header');
+
+    const topRow = document.createElement('div');
+    topRow.className = 'header-top-row';
+
+    const titleGroup = document.createElement('div');
+    titleGroup.style.cssText = 'display:flex;align-items:baseline;gap:8px;min-width:0;';
+
+    const label = document.createElement('span');
+    label.className = isOldBarStyle ? 'label' : 'basecamp-title';
+    label.textContent = day.label;
+    label.contentEditable = true;
+    label.addEventListener('blur', ()=>{ day.label = label.textContent.trim() || day.label; save(); render(); });
+    preventIOSZoom(label);
+    titleGroup.appendChild(label);
+
+    const weekdayDateLabel = getWeekdaySectionDateLabel(day.label);
+    if(weekdayDateLabel){
+      const dateTag = document.createElement('span');
+      dateTag.className = 'section-date-tag';
+      dateTag.textContent = weekdayDateLabel;
+      titleGroup.appendChild(dateTag);
+    }
+
+    topRow.appendChild(titleGroup);
+
+    const right = document.createElement('div');
+    right.style.cssText = 'display:flex;align-items:center;';
+    const activeTasks = day.tasks.filter(t => !t.done || (t.subtasks && t.subtasks.length > 0));
+    const count = document.createElement('div');
+    count.className = 'count';
+    count.textContent = activeTasks.length ? String(activeTasks.length) : '';
+    right.appendChild(count);
+
+    const swatchBtn = document.createElement('button');
+    swatchBtn.className = 'swatch-btn';
+    swatchBtn.title = 'Choose color';
+    if(isOldBarStyle){
+      const contrast = getContrastTextColor(bgColor);
+      swatchBtn.style.borderColor = contrast;
+      swatchBtn.style.background = 'transparent';
+    } else {
+      swatchBtn.style.borderColor = bgColor;
+      swatchBtn.style.background = bgColor;
+    }
+    swatchBtn.addEventListener('click', ()=> togglePicker(dayEl, day));
+    right.appendChild(swatchBtn);
+
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'day-drag-handle';
+    dragHandle.textContent = '≡';
+    right.appendChild(dragHandle);
+
+    topRow.appendChild(right);
+    header.appendChild(topRow);
+
+    if(isOldBarStyle){
+      header.style.background = bgColor;
+      header.style.color = getContrastTextColor(bgColor);
+    } else {
+      const underline = document.createElement('div');
+      underline.className = 'header-underline';
+      header.appendChild(underline);
+    }
+
+    dayEl.appendChild(header);
+
+    const ul = document.createElement('ul');
+    ul.className = 'task-list';
+    ul.dataset.dayId = day.id;
+    activeTasks.forEach(task => ul.appendChild(renderTask(task, true, bgColor, isDatesSection, isListsSection)));
+    dayEl.appendChild(ul);
+
+    container.appendChild(dayEl);
+    initSortable(ul);
+  });
+
+  updateEyeButton(hiddenCount);
+
+  if(daysSortable){ daysSortable.destroy(); daysSortable = null; }
+  daysSortable = new Sortable(container, {
+    animation: 150,
+    handle: '.day-drag-handle',
+    draggable: '.day',
+    ghostClass: 'sortable-ghost',
+    onEnd: reorderDaysFromDOM
+  });
+}
+
+function reorderDaysFromDOM(){
+  const orderedIds = Array.from(document.querySelectorAll('#days > .day')).map(el => el.dataset.dayId);
+  const untouched = data.days.filter(d => !orderedIds.includes(d.id));
+  const reordered = orderedIds.map(id => data.days.find(d => d.id === id)).filter(Boolean);
+  data.days = reordered.concat(untouched);
+  save();
+}
+
+function togglePicker(dayEl, day){
+  const existing = dayEl.querySelector(':scope > .color-picker');
+  if(existing){ existing.remove(); return; }
+  const picker = document.createElement('div');
+  picker.className = 'color-picker';
+  PALETTE.forEach(color=>{
+    const sw = document.createElement('button');
+    sw.className = 'swatch' + (day.color === color ? ' selected' : '');
+    sw.style.background = color;
+    sw.addEventListener('click', ()=>{ day.color = color; save(); render(); });
+    picker.appendChild(sw);
+  });
+  const header = dayEl.querySelector(':scope > .day-header');
+  header.insertAdjacentElement('afterend', picker);
+}
+
+function renderTask(task, draggable, sectionColor, isDatesSection, isListsSection){
+  const hasSubtasks = (task.subtasks || []).length > 0;
+  const li = document.createElement('li');
+  li.className = 'task' + (task.done ? ' done' : '') + (hasSubtasks ? ' has-subtasks' : '');
+  li.dataset.taskId = task.id;
+
+  const rowWrap = document.createElement('div');
+  rowWrap.className = 'row-wrap';
+
+  const deleteBg = document.createElement('div');
+  deleteBg.className = 'row-delete-bg';
+  deleteBg.textContent = 'Delete';
+  rowWrap.appendChild(deleteBg);
+
+  const row = document.createElement('div');
+  row.className = 'task-row';
+
+  if(isDatesSection){
+    const wrap = document.createElement('span');
+    wrap.className = 'date-badge-wrap';
+
+    const dateBadge = document.createElement('span');
+    dateBadge.className = 'date-badge' + (task.date ? '' : ' empty');
+    const badgeColor = sectionColor || 'var(--accent)';
+    if(task.date){
+      dateBadge.style.borderColor = badgeColor;
+      dateBadge.style.color = badgeColor;
+    }
+    dateBadge.textContent = task.date ? formatDateBadge(task.date) : '+ DATE';
+    wrap.appendChild(dateBadge);
+
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.className = 'date-input-overlay';
+    dateInput.value = task.date || '';
+    let dateOpenedAt = 0;
+    dateInput.addEventListener('focus', ()=>{ dateOpenedAt = Date.now(); });
+    dateInput.addEventListener('change', ()=>{
+      // Some mobile browsers fire a spurious 'change' with today's date the instant
+      // an empty date field opens, before the person has actually picked anything.
+      // A genuine selection takes a moment of real interaction, so ignore anything
+      // that fires implausibly fast right after the field opened.
+      const elapsed = Date.now() - dateOpenedAt;
+      if(elapsed < 250){
+        dateInput.value = task.date || '';
+        return;
+      }
+      task.date = dateInput.value || null;
+      save(); render();
+    });
+    dateInput.addEventListener('click', e=> e.stopPropagation());
+    wrap.appendChild(dateInput);
+
+    row.appendChild(wrap);
+  }
+
+  if(!isDatesSection && !hasSubtasks){
+    const cbWrap = document.createElement('span');
+    cbWrap.className = 'checkbox-hit';
+    const cb = document.createElement('span');
+    cb.className = 'checkbox';
+    if(isListsSection){
+      const fillColor = sectionColor || 'var(--accent)';
+      cb.style.background = fillColor;
+      cb.style.borderColor = fillColor;
+    }
+    cbWrap.appendChild(cb);
+    cbWrap.addEventListener('click', ()=>{ task.done = !task.done; save(); render(); renderCompleted(); });
+    row.appendChild(cbWrap);
+  }
+
+  const text = document.createElement('span');
+  text.className = 'task-text';
+  text.textContent = task.text;
+  row.appendChild(text);
+
+  if(task.recurring){
+    const mark = document.createElement('span');
+    mark.className = 'recurring-mark';
+    mark.textContent = '↻';
+    row.appendChild(mark);
+  }
+
+  const hasNoteContent = !!(task.notes && task.notes.trim()) || !!(task.checklist && task.checklist.length);
+  if(hasNoteContent){
+    const dot = document.createElement('span');
+    dot.className = 'note-dot';
+    row.appendChild(dot);
+  }
+
+  if(hasSubtasks){
+    const toggle = document.createElement('button');
+    toggle.className = 'task-collapse-arrow' + (task.collapsed ? ' is-collapsed' : '');
+    toggle.textContent = '›';
+    toggle.title = 'Expand/collapse subtasks';
+    toggle.addEventListener('click', e=>{
+      e.stopPropagation();
+      task.collapsed = !task.collapsed;
+      save(); render();
+    });
+    row.appendChild(toggle);
+  }
+
+  if(draggable){
+    const addSub = document.createElement('button');
+    addSub.className = 'icon-btn add-sub-btn';
+    addSub.textContent = '+';
+    addSub.title = 'Add subtask';
+    addSub.addEventListener('click', e=>{ e.stopPropagation(); startInlineAdd(subUl, task.id, null); });
+    row.appendChild(addSub);
+  }
+
+  const handle = document.createElement('span');
+  handle.className = 'drag-handle';
+  handle.textContent = draggable ? '≡' : '';
+  row.appendChild(handle);
+
+  rowWrap.appendChild(row);
+  li.appendChild(rowWrap);
+  attachSwipeToDelete(rowWrap, row, deleteBg, ()=>{ deleteTaskToTrash(task.id); save(); render(); renderTrash(); }, {
+    onTap: ()=> openDetail(task)
+  });
+
+  const subUl = document.createElement('ul');
+  subUl.className = 'subtask-list' + (task.collapsed ? ' collapsed' : '');
+  subUl.dataset.parentId = task.id;
+  (task.subtasks||[]).filter(st => !st.done).forEach(st => subUl.appendChild(renderSubtask(st, sectionColor)));
+  li.appendChild(subUl);
+  if(draggable) initSortable(subUl);
+
+  return li;
+}
+
+function renderSubtask(sub, sectionColor){
+  const li = document.createElement('li');
+  li.className = 'task subtask' + (sub.done ? ' done' : '');
+  li.dataset.taskId = sub.id;
+
+  const rowWrap = document.createElement('div');
+  rowWrap.className = 'row-wrap';
+
+  const deleteBg = document.createElement('div');
+  deleteBg.className = 'row-delete-bg';
+  deleteBg.textContent = 'Delete';
+  rowWrap.appendChild(deleteBg);
+
+  const row = document.createElement('div');
+  row.className = 'task-row';
+
+  const cbWrap = document.createElement('span');
+  cbWrap.className = 'checkbox-hit';
+  const cb = document.createElement('span');
+  cb.className = 'checkbox';
+  cbWrap.appendChild(cb);
+  cbWrap.addEventListener('click', ()=>{ sub.done = !sub.done; save(); render(); renderCompleted(); });
+  row.appendChild(cbWrap);
+
+  const text = document.createElement('span');
+  text.className = 'task-text';
+  text.textContent = sub.text;
+  row.appendChild(text);
+
+  if(sub.priority){
+    const badge = document.createElement('span');
+    badge.className = 'priority-badge';
+    const color = sectionColor || 'var(--accent)';
+    badge.style.borderColor = color;
+    badge.style.color = color;
+    badge.textContent = 'ROCK';
+    row.appendChild(badge);
+  }
+
+  if(sub.recurring){
+    const mark = document.createElement('span');
+    mark.className = 'recurring-mark';
+    mark.textContent = '↻';
+    row.appendChild(mark);
+  }
+
+  const hasNoteContent = !!(sub.notes && sub.notes.trim()) || !!(sub.checklist && sub.checklist.length);
+  if(hasNoteContent){
+    const dot = document.createElement('span');
+    dot.className = 'note-dot';
+    row.appendChild(dot);
+  }
+
+  const handle = document.createElement('span');
+  handle.className = 'drag-handle';
+  handle.textContent = '≡';
+  row.appendChild(handle);
+
+  rowWrap.appendChild(row);
+  li.appendChild(rowWrap);
+  attachSwipeToDelete(rowWrap, row, deleteBg, ()=>{ deleteTaskToTrash(sub.id); save(); render(); renderTrash(); }, {
+    onLongPress: ()=>{ sub.priority = !sub.priority; save(); render(); },
+    onTap: ()=> openDetail(sub),
+    textEl: text
+  });
+  return li;
+}
+
+function attachSwipeToDelete(rowWrap, row, deleteBg, onDelete, options){
+  options = options || {};
+  const onLongPress = options.onLongPress;
+  const onTap = options.onTap;
+  const textEl = options.textEl;
+  const maxSwipe = 90;
+  const LONG_PRESS_MS = 500;
+  let startX = 0, startY = 0, currentX = 0, dragging = false, active = false;
+  let longPressTimer = null, longPressFired = false;
+
+  function clearLongPress(){ if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }
+
+  function onDown(e){
+    if(e.target.closest('.drag-handle')) return;
+    if(e.target.closest('.checkbox-hit')) return;
+    if(e.target.closest('.icon-btn')) return;
+    if(e.target.closest('.note-icon')) return;
+    if(e.target.closest('.date-badge-wrap')) return;
+    if(e.target.closest('.task-collapse-arrow')) return;
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    startX = e.clientX; startY = e.clientY; currentX = 0; dragging = false; active = true; longPressFired = false;
+    row.style.transition = 'none';
+    if(onLongPress){
+      longPressTimer = setTimeout(()=>{
+        longPressFired = true;
+        active = false;
+        row.style.transform = 'translateX(0)';
+        deleteBg.style.opacity = '0';
+        if(textEl && document.activeElement === textEl) textEl.blur();
+        if(navigator.vibrate) navigator.vibrate(12);
+        onLongPress();
+      }, LONG_PRESS_MS);
+    }
+  }
+  function onMove(e){
+    if(!active) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if(!dragging){
+      if(Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)){ dragging = true; clearLongPress(); }
+      else if(Math.abs(dy) > 8){ active = false; clearLongPress(); return; }
+    }
+    if(dragging){
+      e.preventDefault();
+      currentX = Math.min(0, Math.max(dx, -maxSwipe * 1.4));
+      row.style.transform = 'translateX(' + currentX + 'px)';
+      deleteBg.style.opacity = String(Math.min(1, Math.abs(currentX) / maxSwipe));
+    }
+  }
+  function onUp(){
+    clearLongPress();
+    if(!active){ return; }
+    active = false;
+    if(longPressFired){ dragging = false; return; }
+    row.style.transition = 'transform 0.18s ease';
+    if(dragging && currentX < -maxSwipe){
+      row.style.transform = 'translateX(-100%)';
+      setTimeout(onDelete, 160);
+    } else {
+      row.style.transform = 'translateX(0)';
+      deleteBg.style.opacity = '0';
+      if(!dragging && onTap) onTap();
+    }
+    dragging = false;
+  }
+  row.addEventListener('pointerdown', onDown);
+  row.addEventListener('pointermove', onMove);
+  row.addEventListener('pointerup', onUp);
+  row.addEventListener('pointercancel', ()=>{ clearLongPress(); active = false; dragging = false; });
+}
+
+function startInlineAdd(ul, parentTaskId, dayId){
+  const existing = ul.querySelector(':scope > li.inline-add');
+  if(existing){ existing.querySelector('input').focus(); return; }
+
+  const li = document.createElement('li');
+  li.className = 'task inline-add';
+  const row = document.createElement('div');
+  row.className = 'task-row';
+  const input = document.createElement('input');
+  input.placeholder = parentTaskId ? 'New subtask' : 'New task';
+  input.style.cssText = 'flex:1;background:none;border:none;color:var(--text);font-size:13.5px;outline:none;';
+  preventIOSZoom(input);
+  row.appendChild(input);
+  li.appendChild(row);
+  ul.appendChild(li);
+  input.focus();
+
+  let committed = false;
+  function finalize(reopen){
+    if(committed) return;
+    committed = true;
+    const val = input.value.trim();
+    li.remove();
+    if(val){
+      const newTask = { id: uid(), text: val, done: false, subtasks: [] };
+      if(parentTaskId){
+        const parent = findTaskById(parentTaskId);
+        if(parent){ parent.subtasks = parent.subtasks || []; parent.subtasks.push(newTask); }
+      } else {
+        const day = data.days.find(d => d.id === dayId);
+        if(day) day.tasks.push(newTask);
+      }
+      save();
+      render();
+      if(reopen){
+        const newUl = parentTaskId
+          ? document.querySelector('ul.subtask-list[data-parent-id="' + parentTaskId + '"]')
+          : document.querySelector('.day[data-day-id="' + dayId + '"] > .task-list');
+        if(newUl) startInlineAdd(newUl, parentTaskId, dayId);
+      }
+    }
+  }
+  input.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ finalize(true); }
+    if(e.key==='Escape'){ committed = true; li.remove(); }
+  });
+  input.addEventListener('blur', ()=> finalize(false));
+}
+
+function initSortable(ul){
+  const isSubtaskList = ul.classList.contains('subtask-list');
+  new Sortable(ul, {
+    group: isSubtaskList ? 'subtasks' : 'top-tasks',
+    animation: 150,
+    handle: '.drag-handle',
+    fallbackOnBody: true,
+    swapThreshold: 0.65,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    onEnd: rebuildFromDOM,
+    onAdd: rebuildFromDOM
+  });
+}
+
+function rebuildFromDOM(){
+  const dayEls = document.querySelectorAll('.day');
+  const newDays = [];
+  dayEls.forEach(dayEl=>{
+    const dayId = dayEl.dataset.dayId;
+    const oldDay = data.days.find(d => d.id === dayId);
+    const label = oldDay ? oldDay.label : 'Day';
+    const taskListEl = dayEl.querySelector(':scope > ul.task-list');
+    const tasks = [];
+    taskListEl.querySelectorAll(':scope > li.task').forEach(li=>{
+      const taskId = li.dataset.taskId;
+      const oldTask = findTaskById(taskId) || findSubtaskAnywhere(taskId);
+      const text = oldTask ? oldTask.text : (li.querySelector('.task-text')?.textContent || '');
+      const done = li.classList.contains('done');
+      const subUl = li.querySelector(':scope > ul.subtask-list');
+      const subtasks = [];
+      if(subUl){
+        subUl.querySelectorAll(':scope > li.task').forEach(sli=>{
+          const sid = sli.dataset.taskId;
+          const oldSub = findTaskById(sid) || findSubtaskAnywhere(sid);
+          subtasks.push({
+            id: sid,
+            text: oldSub ? oldSub.text : (sli.querySelector('.task-text')?.textContent || ''),
+            done: sli.classList.contains('done'),
+            priority: !!(oldSub && oldSub.priority),
+            recurring: !!(oldSub && oldSub.recurring),
+            notes: oldSub ? oldSub.notes : undefined,
+            checklist: oldSub ? oldSub.checklist : undefined,
+            subtasks: []
+          });
+        });
+      }
+      // Completed subtasks aren't in the DOM (they're hidden); keep them attached to their parent.
+      const oldCompletedSubs = (oldTask && oldTask.subtasks) ? oldTask.subtasks.filter(s => s.done) : [];
+      tasks.push({
+        id: taskId, text, done, subtasks: subtasks.concat(oldCompletedSubs),
+        collapsed: !!(oldTask && oldTask.collapsed), date: oldTask ? oldTask.date : undefined,
+        recurring: !!(oldTask && oldTask.recurring),
+        notes: oldTask ? oldTask.notes : undefined, checklist: oldTask ? oldTask.checklist : undefined
+      });
+    });
+    // The completed section isn't part of the sortable DOM tree; keep those tasks as they were.
+    const completedTasks = oldDay ? oldDay.tasks.filter(t => t.done) : [];
+    newDays.push({
+      id: dayId,
+      label,
+      tasks: tasks.concat(completedTasks),
+      color: oldDay ? oldDay.color : undefined,
+      showCompleted: oldDay ? oldDay.showCompleted : false
+    });
+  });
+  data.days = newDays;
+  save();
+  render();
+}
+
+document.getElementById('addDayBtn').addEventListener('click', ()=>{
+  document.getElementById('dayForm').classList.toggle('hidden');
+  document.getElementById('newDayInput').focus();
+});
+document.getElementById('cancelDayBtn').addEventListener('click', ()=>{
+  document.getElementById('dayForm').classList.add('hidden');
+  document.getElementById('newDayInput').value = '';
+});
+document.getElementById('confirmDayBtn').addEventListener('click', addDayFromInput);
+document.getElementById('newDayInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addDayFromInput(); });
+preventIOSZoom(document.getElementById('newDayInput'));
+
+function addDayFromInput(){
+  const input = document.getElementById('newDayInput');
+  const val = input.value.trim();
+  if(val){
+    const newDay = { id: uid(), label: val, tasks: [] };
+    data.days.push(newDay);
+    recentlyAddedDayIds.add(newDay.id);
+    save();
+    render();
+  }
+  input.value = '';
+  document.getElementById('dayForm').classList.add('hidden');
+}
+
+function ensureNewSectionAtTop(){
+  const idx = data.days.findIndex(d => ['NEW', 'BASECAMP'].includes((d.label || '').trim().toUpperCase()));
+  let newSection;
+  if(idx > -1){
+    newSection = data.days.splice(idx, 1)[0];
+  } else {
+    newSection = { id: uid(), label: 'BASECAMP', tasks: [] };
+  }
+  data.days.unshift(newSection);
+  recentlyAddedDayIds.add(newSection.id);
+  return newSection;
+}
+
+document.getElementById('fabAdd').addEventListener('click', ()=>{
+  const section = ensureNewSectionAtTop();
+  save();
+  render();
+  const ul = document.querySelector('.day[data-day-id="' + section.id + '"] > .task-list');
+  if(ul) startInlineAdd(ul, null, section.id);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+document.getElementById('trashBtn').addEventListener('click', ()=>{
+  renderTrash();
+  document.getElementById('trashPanel').classList.add('open');
+});
+document.getElementById('trashCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('trashPanel').classList.remove('open');
+});
+document.getElementById('trashEmptyBtn').addEventListener('click', emptyTrash);
+
+document.getElementById('completedBtn').addEventListener('click', ()=>{
+  renderCompleted();
+  document.getElementById('completedPanel').classList.add('open');
+});
+document.getElementById('completedCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('completedPanel').classList.remove('open');
+});
+
+document.getElementById('eyeBtn').addEventListener('click', ()=>{
+  const turningOn = !data.showEmptyDays;
+  data.showEmptyDays = !data.showEmptyDays;
+  recentlyAddedDayIds.clear();
+  save(); render();
+  if(turningOn){
+    const emptyDayEl = Array.from(document.querySelectorAll('#days > .day')).find(el=>{
+      const d = data.days.find(x => x.id === el.dataset.dayId);
+      return d && !(d.tasks && d.tasks.some(t => !t.done || (t.subtasks && t.subtasks.length > 0)));
+    });
+    if(emptyDayEl) emptyDayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+
+load();
+</script>
+</body>
+</html>
