@@ -59,6 +59,7 @@
     font-size:12.5px;font-weight:700;letter-spacing:0.4px;color:inherit;
     outline:none;min-width:20px;
   }
+  .pinned-header .label{font-size:14.5px;}
   .day-drag-handle{
     color:inherit;opacity:0.75;font-size:20px;margin-left:8px;flex-shrink:0;
     touch-action:none;line-height:1;padding:4px;
@@ -253,6 +254,7 @@
     <button id="cancelDayBtn">Cancel</button>
   </div>
   <div id="days"></div>
+  <div id="pinnedDays"></div>
 </div>
 
 <div id="bottomBar">
@@ -362,8 +364,11 @@ function preventIOSZoom(el){
 }
 
 const DEFAULT_SECTION_COLOR = '#38b6ff';
+const PINNED_SECTION_COLOR = '#1E7FB0';
 const PALETTE = ['#38b6ff', '#2bf645', '#ff38D3', '#f8fd11', '#ff8d08'];
 function getDayColor(day){
+  const key = (day.label || '').trim().toUpperCase();
+  if(key === 'DATES' || key === 'LISTS') return PINNED_SECTION_COLOR;
   return day.color || DEFAULT_SECTION_COLOR;
 }
 function getContrastTextColor(hex){
@@ -803,11 +808,20 @@ function render(){
   reorderWeekdaySections();
   const container = document.getElementById('days');
   container.innerHTML = '';
+  const pinnedContainer = document.getElementById('pinnedDays');
+  pinnedContainer.innerHTML = '';
 
-  const visibleDays = data.days.filter(day =>
-    (day.tasks && day.tasks.some(t => !t.done || (t.subtasks && t.subtasks.length > 0))) ||
-    recentlyAddedDayIds.has(day.id) || data.showEmptyDays
-  );
+  const todayIdxNow = new Date().getDay();
+  const visibleDays = data.days.filter(day => {
+    const key = (day.label || '').trim().toUpperCase();
+    if(key === 'DATES' || key === 'LISTS') return true;
+    if(WEEKDAYS.includes(key)){
+      const rank = weekdayRank(key, todayIdxNow);
+      return rank <= 2 || data.showEmptyDays;
+    }
+    return (day.tasks && day.tasks.some(t => !t.done || (t.subtasks && t.subtasks.length > 0))) ||
+      recentlyAddedDayIds.has(day.id) || data.showEmptyDays;
+  });
   const hiddenCount = data.days.length - visibleDays.length;
 
   visibleDays.forEach(day=>{
@@ -819,10 +833,13 @@ function render(){
     const isOldBarStyle = sectionLabel === 'DATES' || sectionLabel === 'LISTS';
     const isDatesSection = sectionLabel === 'DATES';
     const isListsSection = sectionLabel === 'LISTS';
+    const isWeekday = WEEKDAYS.includes(sectionLabel);
+    const weekdayTodayRank = isWeekday ? weekdayRank(sectionLabel, todayIdxNow) : null;
+    const isTodaySection = weekdayTodayRank === 0;
     dayEl.style.borderLeftColor = isOldBarStyle ? 'transparent' : bgColor;
 
     const header = document.createElement('div');
-    header.className = 'day-header' + (isOldBarStyle ? '' : ' basecamp-header');
+    header.className = 'day-header' + (isOldBarStyle ? ' pinned-header' : ' basecamp-header');
 
     const topRow = document.createElement('div');
     topRow.className = 'header-top-row';
@@ -832,18 +849,25 @@ function render(){
 
     const label = document.createElement('span');
     label.className = isOldBarStyle ? 'label' : 'basecamp-title';
-    label.textContent = day.label;
+    label.textContent = isTodaySection ? 'TODAY' : day.label;
     label.contentEditable = true;
-    label.addEventListener('blur', ()=>{ day.label = label.textContent.trim() || day.label; save(); render(); });
+    label.addEventListener('blur', ()=>{
+      const newText = label.textContent.trim();
+      if(isTodaySection && newText === 'TODAY') return;
+      day.label = newText || day.label;
+      save(); render();
+    });
     preventIOSZoom(label);
     titleGroup.appendChild(label);
 
-    const weekdayDateLabel = getWeekdaySectionDateLabel(day.label);
-    if(weekdayDateLabel){
-      const dateTag = document.createElement('span');
-      dateTag.className = 'section-date-tag';
-      dateTag.textContent = weekdayDateLabel;
-      titleGroup.appendChild(dateTag);
+    if(!isTodaySection){
+      const weekdayDateLabel = getWeekdaySectionDateLabel(day.label);
+      if(weekdayDateLabel){
+        const dateTag = document.createElement('span');
+        dateTag.className = 'section-date-tag';
+        dateTag.textContent = weekdayDateLabel;
+        titleGroup.appendChild(dateTag);
+      }
     }
 
     topRow.appendChild(titleGroup);
@@ -856,24 +880,20 @@ function render(){
     count.textContent = activeTasks.length ? String(activeTasks.length) : '';
     right.appendChild(count);
 
-    const swatchBtn = document.createElement('button');
-    swatchBtn.className = 'swatch-btn';
-    swatchBtn.title = 'Choose color';
-    if(isOldBarStyle){
-      const contrast = getContrastTextColor(bgColor);
-      swatchBtn.style.borderColor = contrast;
-      swatchBtn.style.background = 'transparent';
-    } else {
+    if(!isOldBarStyle){
+      const swatchBtn = document.createElement('button');
+      swatchBtn.className = 'swatch-btn';
+      swatchBtn.title = 'Choose color';
       swatchBtn.style.borderColor = bgColor;
       swatchBtn.style.background = bgColor;
-    }
-    swatchBtn.addEventListener('click', ()=> togglePicker(dayEl, day));
-    right.appendChild(swatchBtn);
+      swatchBtn.addEventListener('click', ()=> togglePicker(dayEl, day));
+      right.appendChild(swatchBtn);
 
-    const dragHandle = document.createElement('span');
-    dragHandle.className = 'day-drag-handle';
-    dragHandle.textContent = '≡';
-    right.appendChild(dragHandle);
+      const dragHandle = document.createElement('span');
+      dragHandle.className = 'day-drag-handle';
+      dragHandle.textContent = '≡';
+      right.appendChild(dragHandle);
+    }
 
     topRow.appendChild(right);
     header.appendChild(topRow);
@@ -895,7 +915,11 @@ function render(){
     activeTasks.forEach(task => ul.appendChild(renderTask(task, true, bgColor, isDatesSection, isListsSection)));
     dayEl.appendChild(ul);
 
-    container.appendChild(dayEl);
+    if(isOldBarStyle){
+      pinnedContainer.appendChild(dayEl);
+    } else {
+      container.appendChild(dayEl);
+    }
     initSortable(ul);
   });
 
@@ -1274,8 +1298,10 @@ function initSortable(ul){
 function rebuildFromDOM(){
   const dayEls = document.querySelectorAll('.day');
   const newDays = [];
+  const seenDayIds = new Set();
   dayEls.forEach(dayEl=>{
     const dayId = dayEl.dataset.dayId;
+    seenDayIds.add(dayId);
     const oldDay = data.days.find(d => d.id === dayId);
     const label = oldDay ? oldDay.label : 'Day';
     const taskListEl = dayEl.querySelector(':scope > ul.task-list');
@@ -1321,6 +1347,12 @@ function rebuildFromDOM(){
       color: oldDay ? oldDay.color : undefined,
       showCompleted: oldDay ? oldDay.showCompleted : false
     });
+  });
+  // Sections that are currently hidden (e.g. collapsed weekdays, empty sections)
+  // never had a DOM element to read from — keep them exactly as they were rather
+  // than treating their absence from the DOM as "deleted."
+  data.days.forEach(oldDay=>{
+    if(!seenDayIds.has(oldDay.id)) newDays.push(oldDay);
   });
   data.days = newDays;
   save();
@@ -1394,15 +1426,20 @@ document.getElementById('completedCloseBtn').addEventListener('click', ()=>{
 
 document.getElementById('eyeBtn').addEventListener('click', ()=>{
   const turningOn = !data.showEmptyDays;
+  const todayIdxNow = new Date().getDay();
   data.showEmptyDays = !data.showEmptyDays;
   recentlyAddedDayIds.clear();
   save(); render();
   if(turningOn){
-    const emptyDayEl = Array.from(document.querySelectorAll('#days > .day')).find(el=>{
+    const hiddenDayEl = Array.from(document.querySelectorAll('#days > .day')).find(el=>{
       const d = data.days.find(x => x.id === el.dataset.dayId);
-      return d && !(d.tasks && d.tasks.some(t => !t.done || (t.subtasks && t.subtasks.length > 0)));
+      if(!d) return false;
+      const key = (d.label || '').trim().toUpperCase();
+      if(key === 'DATES' || key === 'LISTS') return false;
+      if(WEEKDAYS.includes(key)) return weekdayRank(key, todayIdxNow) > 2;
+      return !(d.tasks && d.tasks.some(t => !t.done || (t.subtasks && t.subtasks.length > 0)));
     });
-    if(emptyDayEl) emptyDayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if(hiddenDayEl) hiddenDayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 });
 
