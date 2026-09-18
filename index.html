@@ -173,12 +173,13 @@
     background:#B23B3B;color:#fff;font-size:10px;font-weight:700;
     display:flex;align-items:center;justify-content:center;padding:0 3px;
   }
-  #fabAdd{
+  .bottom-bar-right{display:flex;align-items:center;gap:14px;}
+  #fabAdd, #ideaBtn{
     width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;
     border:none;font-size:26px;font-weight:600;display:flex;align-items:center;justify-content:center;
     line-height:1;box-shadow:0 4px 14px rgba(0,0,0,0.4);
   }
-  #fabAdd:active{transform:scale(0.94);}
+  #fabAdd:active, #ideaBtn:active{transform:scale(0.94);}
 
   .side-panel{
     position:fixed;inset:0;background:var(--bg);z-index:30;
@@ -191,6 +192,9 @@
     padding:14px 16px;border-bottom:1px solid var(--line);
   }
   .trash-header h2{font-size:15px;margin:0;font-weight:600;}
+  #detailTitle:empty::before{content:"Add a title (optional)"; color:var(--text-dim); font-weight:400;}
+  #detailSaveBtn{background:none;border:1px solid var(--line);color:var(--accent);font-size:12px;padding:5px 10px;border-radius:7px;}
+  #detailDeleteBtn{background:none;border:none;color:#C1584A;padding:2px 4px;display:flex;align-items:center;}
   .trash-header-actions{display:flex;align-items:center;gap:14px;}
   #trashEmptyBtn{background:none;border:1px solid var(--line);color:var(--text-dim);font-size:12px;padding:5px 10px;border-radius:6px;}
   #trashCloseBtn, #completedCloseBtn{background:none;border:none;color:var(--text-dim);font-size:22px;padding:2px 4px;}
@@ -258,7 +262,7 @@
       Mountains
     </button>
     <button class="theme-option" data-theme="city">
-      <span class="theme-swatch" style="background:#581a69;"></span>
+      <span class="theme-swatch" style="background:#8c52ff;"></span>
       City View
     </button>
     <button class="theme-option" data-theme="forest">
@@ -307,7 +311,16 @@
       <span id="eyeBadge" class="hidden">0</span>
     </button>
   </div>
-  <button id="fabAdd" title="Add task">+</button>
+  <div class="bottom-bar-right">
+    <button id="ideaBtn" title="Add idea">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6"/>
+        <path d="M10 22h4"/>
+        <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.05V17h6v-.25c0-.85.4-1.55 1-2.05A7 7 0 0 0 12 2z"/>
+      </svg>
+    </button>
+    <button id="fabAdd" title="Add task">+</button>
+  </div>
 </div>
 
 <div id="trashPanel" class="side-panel">
@@ -335,6 +348,16 @@
   <div class="trash-header">
     <h2 id="detailTitle" contenteditable="true" spellcheck="false">Task</h2>
     <div class="trash-header-actions">
+      <button id="detailDeleteBtn" title="Delete">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h16"/>
+          <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
+          <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/>
+          <path d="M10 11v6"/>
+          <path d="M14 11v6"/>
+        </svg>
+      </button>
+      <button id="detailSaveBtn">Save</button>
       <button id="detailCloseBtn">×</button>
     </div>
   </div>
@@ -399,61 +422,88 @@ const MOUNTAIN_BANNER_SVG = `
 
 const CITY_BANNER_SVG = `
   <rect x="0" y="0" width="1200" height="200" fill="#150A1C"/>
-  <circle cx="140" cy="38" r="14" fill="#E8D6F0" opacity="0.85"/>
-  <g fill="#C9A6DA" opacity="0.8">
-    <rect x="0" y="150" width="70" height="50"/>
-    <rect x="80" y="140" width="60" height="60"/>
-    <rect x="150" y="155" width="90" height="45"/>
-    <rect x="260" y="145" width="70" height="55"/>
-    <rect x="350" y="135" width="100" height="65"/>
-    <rect x="470" y="150" width="60" height="50"/>
-    <rect x="550" y="140" width="80" height="60"/>
-    <rect x="650" y="155" width="70" height="45"/>
-    <rect x="740" y="145" width="90" height="55"/>
-    <rect x="850" y="135" width="70" height="65"/>
-    <rect x="940" y="150" width="100" height="50"/>
-    <rect x="1060" y="140" width="140" height="60"/>
+  <circle cx="130" cy="35" r="13" fill="#E8D6F0" opacity="0.85"/>
+  <g fill="#D9BFF0" opacity="0.65">
+    <rect x="20" y="165" width="40" height="35"/>
+    <rect x="90" y="155" width="35" height="45"/>
+    <rect x="180" y="170" width="45" height="30"/>
+    <rect x="280" y="160" width="40" height="40"/>
+    <rect x="600" y="165" width="45" height="35"/>
+    <rect x="700" y="160" width="40" height="40"/>
+    <rect x="930" y="155" width="35" height="45"/>
+    <rect x="1040" y="170" width="45" height="30"/>
+    <rect x="1130" y="160" width="40" height="40"/>
   </g>
-  <g fill="#9B5FB8" opacity="0.92">
-    <rect x="20" y="120" width="80" height="80"/>
-    <rect x="120" y="110" width="60" height="90"/>
-    <polygon points="200,200 200,125 245,95 290,125 290,200"/>
-    <rect x="420" y="120" width="100" height="80"/>
-    <rect x="940" y="120" width="70" height="80"/>
-    <rect x="1040" y="105" width="130" height="95"/>
+  <g fill="#5e17eb" opacity="0.85">
+    <rect x="50" y="135" width="55" height="65"/>
+    <rect x="150" y="145" width="35" height="55"/>
+    <rect x="220" y="145" width="50" height="55"/>
+    <rect x="650" y="140" width="55" height="60"/>
+    <rect x="850" y="125" width="50" height="75"/>
+    <rect x="995" y="150" width="40" height="50"/>
+    <rect x="1080" y="145" width="60" height="55"/>
   </g>
-  <g fill="#581a69">
-    <rect x="0" y="100" width="90" height="100"/>
-    <polygon points="110,200 110,110 145,80 180,110 180,200"/>
-    <rect x="210" y="95" width="100" height="105"/>
-    <rect x="235" y="70" width="50" height="25"/>
-    <rect x="340" y="85" width="60" height="115"/>
-    <rect x="368" y="65" width="4" height="20"/>
-    <rect x="430" y="95" width="70" height="105" rx="14"/>
-    <rect x="600" y="150" width="46" height="50"/>
-    <rect x="830" y="90" width="80" height="110"/>
-    <polygon points="930,200 930,100 972,72 1014,100 1014,200"/>
-    <rect x="1050" y="95" width="150" height="105"/>
-    <rect x="1118" y="75" width="4" height="20"/>
+  <g fill="#8c52ff">
+    <rect x="0" y="130" width="50" height="70"/>
+    <polygon points="90,200 90,140 112,120 134,140 134,200"/>
+    <rect x="190" y="125" width="55" height="75"/>
+    <rect x="205" y="105" width="25" height="20"/>
+    <rect x="290" y="135" width="40" height="65"/>
+    <rect x="308" y="118" width="4" height="17"/>
+    <rect x="335" y="145" width="35" height="55"/>
+    <rect x="580" y="125" width="50" height="75" rx="10"/>
+    <rect x="660" y="140" width="45" height="60"/>
+    <rect x="705" y="135" width="50" height="65"/>
+    <polygon points="860,200 860,120 882,100 904,120 904,200"/>
+    <rect x="950" y="130" width="45" height="70"/>
+    <rect x="965" y="112" width="16" height="18"/>
+    <rect x="1040" y="110" width="60" height="90"/>
+    <rect x="1068" y="92" width="4" height="18"/>
+    <rect x="1130" y="130" width="50" height="70" rx="10"/>
   </g>
-  <g stroke="#581a69" stroke-width="2" fill="none">
-    <line x1="584" y1="92" x2="580" y2="178"/>
-    <line x1="584" y1="92" x2="650" y2="178"/>
-    <line x1="584" y1="92" x2="560" y2="178"/>
-    <line x1="764" y1="92" x2="768" y2="178"/>
-    <line x1="764" y1="92" x2="700" y2="178"/>
-    <line x1="764" y1="92" x2="820" y2="178"/>
+  <g fill="#8c52ff">
+    <rect x="390" y="130" width="6" height="60"/>
+    <rect x="540" y="130" width="6" height="60"/>
+    <rect x="375" y="185" width="180" height="5"/>
   </g>
-  <g fill="#581a69">
-    <rect x="580" y="90" width="8" height="95"/>
-    <rect x="760" y="90" width="8" height="95"/>
-    <rect x="560" y="178" width="260" height="6"/>
+  <g stroke="#8c52ff" stroke-width="1.5" fill="none">
+    <line x1="393" y1="132" x2="375" y2="185"/>
+    <line x1="393" y1="132" x2="465" y2="185"/>
+    <line x1="543" y1="132" x2="555" y2="185"/>
+    <line x1="543" y1="132" x2="470" y2="185"/>
+  </g>
+  <g stroke="#8c52ff" stroke-width="4" fill="none">
+    <line x1="774" y1="55" x2="774" y2="200"/>
+  </g>
+  <g fill="#8c52ff">
+    <rect x="774" y="50" width="105" height="5"/>
+    <rect x="735" y="50" width="39" height="5"/>
+    <rect x="728" y="42" width="10" height="12"/>
+  </g>
+  <g stroke="#8c52ff" stroke-width="1.5" fill="none">
+    <line x1="774" y1="35" x2="879" y2="50"/>
+    <line x1="774" y1="35" x2="735" y2="50"/>
+    <line x1="879" y1="53" x2="879" y2="90"/>
   </g>
   <g fill="#E8D6F0" opacity="0.9">
-    <rect x="250" y="186" width="46" height="14" rx="4"/>
-    <rect x="258" y="180" width="24" height="8" rx="2"/>
-    <circle cx="260" cy="200" r="6"/>
-    <circle cx="286" cy="200" r="6"/>
+    <rect x="220" y="184" width="50" height="14" rx="4"/>
+    <rect x="230" y="178" width="26" height="8" rx="2"/>
+    <circle cx="232" cy="198" r="6"/>
+    <circle cx="258" cy="198" r="6"/>
+    <rect x="470" y="188" width="30" height="10" rx="3"/>
+    <circle cx="478" cy="199" r="4"/>
+    <circle cx="493" cy="199" r="4"/>
+    <rect x="900" y="188" width="30" height="10" rx="3"/>
+    <circle cx="908" cy="199" r="4"/>
+    <circle cx="923" cy="199" r="4"/>
+    <rect x="640" y="184" width="50" height="14" rx="4"/>
+    <rect x="650" y="178" width="26" height="8" rx="2"/>
+    <circle cx="652" cy="198" r="6"/>
+    <circle cx="678" cy="198" r="6"/>
+    <rect x="1050" y="184" width="50" height="14" rx="4"/>
+    <rect x="1060" y="178" width="26" height="8" rx="2"/>
+    <circle cx="1062" cy="198" r="6"/>
+    <circle cx="1088" cy="198" r="6"/>
   </g>
 `;
 
@@ -544,7 +594,7 @@ const BEACH_BANNER_SVG = `
 
 const THEMES = {
   mountains: { accent: '#38b6ff', defaultSectionColor: '#38b6ff', pinnedColor: '#1E7FB0', banner: MOUNTAIN_BANNER_SVG },
-  city: { accent: '#9B3FBF', defaultSectionColor: '#9B3FBF', pinnedColor: '#581a69', banner: CITY_BANNER_SVG },
+  city: { accent: '#8c52ff', defaultSectionColor: '#8c52ff', pinnedColor: '#8c52ff', banner: CITY_BANNER_SVG },
   forest: { accent: '#2ECC71', defaultSectionColor: '#2ECC71', pinnedColor: '#008037', banner: FOREST_BANNER_SVG },
   beach: { accent: '#FF751F', defaultSectionColor: '#FF751F', pinnedColor: '#762F02', banner: BEACH_BANNER_SVG }
 };
@@ -560,7 +610,7 @@ function applyTheme(themeName){
 const PALETTE = ['#38b6ff', '#2bf645', '#ff38D3', '#f8fd11', '#ff8d08'];
 function getDayColor(day){
   const key = (day.label || '').trim().toUpperCase();
-  if(key === 'DATES' || key === 'LISTS' || key === 'TASKS') return PINNED_SECTION_COLOR;
+  if(key === 'DATES' || key === 'LISTS' || key === 'TASKS' || key === 'IDEAS') return PINNED_SECTION_COLOR;
   return DEFAULT_SECTION_COLOR;
 }
 function getContrastTextColor(hex){
@@ -570,7 +620,7 @@ function getContrastTextColor(hex){
 }
 
 function defaultData(){
-  const dayNames = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'TASKS', 'DATES', 'LISTS'];
+  const dayNames = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'TASKS', 'DATES', 'LISTS', 'IDEAS'];
   const days = dayNames.map(name => ({ id: uid(), label: name, tasks: [] }));
   return { days, trash: [] };
 }
@@ -807,10 +857,13 @@ function renderCompleted(){
 
 let currentDetailSub = null;
 
-function openDetail(sub){
+function openDetail(sub, focusNotes){
   currentDetailSub = sub;
   renderDetailPanel();
   document.getElementById('detailPanel').classList.add('open');
+  if(focusNotes){
+    setTimeout(()=>{ document.getElementById('detailNotes').focus(); }, 50);
+  }
 }
 function closeDetail(){
   document.getElementById('detailPanel').classList.remove('open');
@@ -821,7 +874,7 @@ function renderDetailPanel(){
   if(!currentDetailSub) return;
   const sub = currentDetailSub;
   const titleEl = document.getElementById('detailTitle');
-  if(document.activeElement !== titleEl) titleEl.textContent = sub.text || 'Subtask';
+  if(document.activeElement !== titleEl) titleEl.textContent = sub.text || '';
 
   document.getElementById('detailRecurringToggle').classList.toggle('on', !!sub.recurring);
 
@@ -870,6 +923,20 @@ function renderDetailPanel(){
 }
 
 document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
+document.getElementById('detailSaveBtn').addEventListener('click', ()=>{
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  closeDetail();
+});
+
+document.getElementById('detailDeleteBtn').addEventListener('click', ()=>{
+  if(!currentDetailSub) return;
+  const id = currentDetailSub.id;
+  deleteTaskToTrash(id);
+  save();
+  closeDetail();
+  render();
+  renderTrash();
+});
 
 const detailTitleEl = document.getElementById('detailTitle');
 preventIOSZoom(detailTitleEl);
@@ -1025,9 +1092,10 @@ function render(){
     dayEl.dataset.dayId = day.id;
     const bgColor = getDayColor(day);
     const sectionLabel = (day.label || '').trim().toUpperCase();
-    const isOldBarStyle = sectionLabel === 'DATES' || sectionLabel === 'LISTS' || sectionLabel === 'TASKS';
+    const isOldBarStyle = sectionLabel === 'DATES' || sectionLabel === 'LISTS' || sectionLabel === 'TASKS' || sectionLabel === 'IDEAS';
     const isDatesSection = sectionLabel === 'DATES';
     const isListsSection = sectionLabel === 'LISTS';
+    const isIdeasSection = sectionLabel === 'IDEAS';
     const isWeekday = WEEKDAYS.includes(sectionLabel);
     const weekdayTodayRank = isWeekday ? weekdayRank(sectionLabel, todayIdxNow) : null;
     const isTodaySection = weekdayTodayRank === 0;
@@ -1099,7 +1167,7 @@ function render(){
     const ul = document.createElement('ul');
     ul.className = 'task-list';
     ul.dataset.dayId = day.id;
-    activeTasks.forEach(task => ul.appendChild(renderTask(task, true, bgColor, isDatesSection, isListsSection)));
+    activeTasks.forEach(task => ul.appendChild(renderTask(task, true, bgColor, isDatesSection, isListsSection || isIdeasSection)));
     dayEl.appendChild(ul);
 
     if(isOldBarStyle){
@@ -1187,18 +1255,22 @@ function renderTask(task, draggable, sectionColor, isDatesSection, isListsSectio
   }
 
   if(!isDatesSection && !hasSubtasks){
-    const cbWrap = document.createElement('span');
-    cbWrap.className = 'checkbox-hit';
-    const cb = document.createElement('span');
-    cb.className = 'checkbox';
     if(isListsSection){
+      const cb = document.createElement('span');
+      cb.className = 'checkbox';
       const fillColor = sectionColor || 'var(--accent)';
       cb.style.background = fillColor;
       cb.style.borderColor = fillColor;
+      row.appendChild(cb);
+    } else {
+      const cbWrap = document.createElement('span');
+      cbWrap.className = 'checkbox-hit';
+      const cb = document.createElement('span');
+      cb.className = 'checkbox';
+      cbWrap.appendChild(cb);
+      cbWrap.addEventListener('click', ()=>{ task.done = !task.done; save(); render(); renderCompleted(); });
+      row.appendChild(cbWrap);
     }
-    cbWrap.appendChild(cb);
-    cbWrap.addEventListener('click', ()=>{ task.done = !task.done; save(); render(); renderCompleted(); });
-    row.appendChild(cbWrap);
   }
 
   const text = document.createElement('span');
@@ -1577,6 +1649,25 @@ document.getElementById('fabAdd').addEventListener('click', ()=>{
   const ul = dayEl ? dayEl.querySelector(':scope > .task-list') : null;
   if(ul) startInlineAdd(ul, null, section.id);
   if(dayEl) dayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+function ensureIdeasSection(){
+  let section = data.days.find(d => (d.label || '').trim().toUpperCase() === 'IDEAS');
+  if(!section){
+    section = { id: uid(), label: 'IDEAS', tasks: [] };
+    data.days.push(section);
+  }
+  return section;
+}
+
+document.getElementById('ideaBtn').addEventListener('click', ()=>{
+  const section = ensureIdeasSection();
+  recentlyAddedDayIds.add(section.id);
+  const idea = { id: uid(), text: '', notes: '', checklist: undefined, done: false, subtasks: [] };
+  section.tasks.push(idea);
+  save();
+  render();
+  openDetail(idea, true);
 });
 
 document.getElementById('trashBtn').addEventListener('click', ()=>{
