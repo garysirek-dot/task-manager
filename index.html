@@ -43,7 +43,7 @@
 
   .hidden{display:none !important;}
 
-  .day{border-bottom:22px solid var(--bg);border-left:4px solid transparent;background:var(--bg);}
+  .day{border-bottom:22px solid var(--bg);border-left:6px solid transparent;background:var(--bg);}
   .day-header{
     display:flex;flex-direction:column;gap:6px;
     padding:8px 16px 6px;margin-bottom:2px;
@@ -561,7 +561,7 @@ const PALETTE = ['#38b6ff', '#2bf645', '#ff38D3', '#f8fd11', '#ff8d08'];
 function getDayColor(day){
   const key = (day.label || '').trim().toUpperCase();
   if(key === 'DATES' || key === 'LISTS' || key === 'TASKS') return PINNED_SECTION_COLOR;
-  return day.color || DEFAULT_SECTION_COLOR;
+  return DEFAULT_SECTION_COLOR;
 }
 function getContrastTextColor(hex){
   const key = (hex || '').toLowerCase();
@@ -1076,14 +1076,6 @@ function render(){
     right.appendChild(count);
 
     if(!isOldBarStyle){
-      const swatchBtn = document.createElement('button');
-      swatchBtn.className = 'swatch-btn';
-      swatchBtn.title = 'Choose color';
-      swatchBtn.style.borderColor = bgColor;
-      swatchBtn.style.background = bgColor;
-      swatchBtn.addEventListener('click', ()=> togglePicker(dayEl, day));
-      right.appendChild(swatchBtn);
-
       const dragHandle = document.createElement('span');
       dragHandle.className = 'day-drag-handle';
       dragHandle.textContent = '≡';
@@ -1136,22 +1128,6 @@ function reorderDaysFromDOM(){
   const reordered = orderedIds.map(id => data.days.find(d => d.id === id)).filter(Boolean);
   data.days = reordered.concat(untouched);
   save();
-}
-
-function togglePicker(dayEl, day){
-  const existing = dayEl.querySelector(':scope > .color-picker');
-  if(existing){ existing.remove(); return; }
-  const picker = document.createElement('div');
-  picker.className = 'color-picker';
-  PALETTE.forEach(color=>{
-    const sw = document.createElement('button');
-    sw.className = 'swatch' + (day.color === color ? ' selected' : '');
-    sw.style.background = color;
-    sw.addEventListener('click', ()=>{ day.color = color; save(); render(); });
-    picker.appendChild(sw);
-  });
-  const header = dayEl.querySelector(':scope > .day-header');
-  header.insertAdjacentElement('afterend', picker);
 }
 
 function renderTask(task, draggable, sectionColor, isDatesSection, isListsSection){
