@@ -31,12 +31,16 @@
   header h1{font-size:16px;font-weight:600;margin:0;letter-spacing:0.2px;outline:none;cursor:text;min-width:20px;}
   .hero-banner{width:100%;height:76px;overflow:hidden;line-height:0;}
   .hero-banner svg{display:block;width:100%;height:100%;}
-  #addDayBtn{background:none;border:1px solid var(--line);color:var(--accent);font-size:12px;padding:5px 10px;border-radius:7px;}
-  #addDayBtn:active{background:var(--surface);}
+  #themesBtn{background:none;border:1px solid var(--line);color:var(--accent);font-size:12px;padding:5px 10px;border-radius:7px;}
+  #themesBtn:active{background:var(--surface);}
+  #themePicker{display:flex;flex-wrap:wrap;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);}
+  .theme-option{
+    flex:1 1 40%;min-width:120px;display:flex;flex-direction:column;align-items:center;gap:6px;
+    background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:10px 8px;color:var(--text);font-size:12px;
+  }
+  .theme-option.selected{border-color:var(--accent);}
+  .theme-swatch{width:100%;height:22px;border-radius:5px;}
 
-  #dayForm{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);}
-  #dayForm input{flex:1;background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 9px;font-size:13px;}
-  #dayForm button{background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 11px;font-size:12px;}
   .hidden{display:none !important;}
 
   .day{border-bottom:22px solid var(--bg);border-left:4px solid transparent;background:var(--bg);}
@@ -160,7 +164,7 @@
     padding:0 20px;z-index:20;
   }
   .bottom-bar-left{display:flex;align-items:center;gap:14px;}
-  #trashBtn, #completedBtn, #eyeBtn{
+  #trashBtn, #completedBtn, #eyeBtn, #resetAppBtn{
     background:none;border:none;color:var(--text-dim);padding:8px;
     position:relative;line-height:1;display:flex;align-items:center;justify-content:center;
   }
@@ -246,12 +250,25 @@
 <div id="app">
   <header>
     <h1 id="appTitle" contenteditable="true" spellcheck="false"></h1>
-    <button id="addDayBtn">+ Section</button>
+    <button id="themesBtn">Themes</button>
   </header>
-  <div id="dayForm" class="hidden">
-    <input id="newDayInput" placeholder="Section name (e.g. Rocks, Trip, Activities)">
-    <button id="confirmDayBtn">Add</button>
-    <button id="cancelDayBtn">Cancel</button>
+  <div id="themePicker" class="hidden">
+    <button class="theme-option" data-theme="mountains">
+      <span class="theme-swatch" style="background:#38b6ff;"></span>
+      Mountains
+    </button>
+    <button class="theme-option" data-theme="city">
+      <span class="theme-swatch" style="background:#581a69;"></span>
+      City View
+    </button>
+    <button class="theme-option" data-theme="forest">
+      <span class="theme-swatch" style="background:#008037;"></span>
+      Forest
+    </button>
+    <button class="theme-option" data-theme="beach">
+      <span class="theme-swatch" style="background:#FF751F;"></span>
+      Beach
+    </button>
   </div>
   <div id="days"></div>
   <div id="pinnedDays"></div>
@@ -259,6 +276,12 @@
 
 <div id="bottomBar">
   <div class="bottom-bar-left">
+    <button id="resetAppBtn" title="Reset app">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-3-6.7"/>
+        <polyline points="21 3 21 9 15 9"/>
+      </svg>
+    </button>
     <button id="trashBtn" title="Deleted tasks">
       <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 7h16"/>
@@ -363,8 +386,177 @@ function preventIOSZoom(el){
   });
 }
 
-const DEFAULT_SECTION_COLOR = '#38b6ff';
-const PINNED_SECTION_COLOR = '#1E7FB0';
+let DEFAULT_SECTION_COLOR = '#38b6ff';
+let PINNED_SECTION_COLOR = '#1E7FB0';
+
+const MOUNTAIN_BANNER_SVG = `
+  <rect x="0" y="0" width="1200" height="200" fill="#0A1F2B"/>
+  <circle cx="1080" cy="50" r="22" fill="#CFEFFF" opacity="0.85"/>
+  <polygon points="0,200 0,150 100,110 220,150 340,90 460,140 600,100 760,150 900,110 1040,150 1200,120 1200,200" fill="#9FDBFF" opacity="0.9"/>
+  <polygon points="0,200 0,170 150,120 300,160 420,100 560,150 700,110 850,160 1000,120 1150,155 1200,140 1200,200" fill="#5AC8FF"/>
+  <polygon points="0,200 0,190 120,140 260,180 400,130 540,175 680,135 820,180 960,140 1100,178 1200,160 1200,200" fill="#1E7FB0"/>
+`;
+
+const CITY_BANNER_SVG = `
+  <rect x="0" y="0" width="1200" height="200" fill="#150A1C"/>
+  <circle cx="140" cy="38" r="14" fill="#E8D6F0" opacity="0.85"/>
+  <g fill="#C9A6DA" opacity="0.8">
+    <rect x="0" y="150" width="70" height="50"/>
+    <rect x="80" y="140" width="60" height="60"/>
+    <rect x="150" y="155" width="90" height="45"/>
+    <rect x="260" y="145" width="70" height="55"/>
+    <rect x="350" y="135" width="100" height="65"/>
+    <rect x="470" y="150" width="60" height="50"/>
+    <rect x="550" y="140" width="80" height="60"/>
+    <rect x="650" y="155" width="70" height="45"/>
+    <rect x="740" y="145" width="90" height="55"/>
+    <rect x="850" y="135" width="70" height="65"/>
+    <rect x="940" y="150" width="100" height="50"/>
+    <rect x="1060" y="140" width="140" height="60"/>
+  </g>
+  <g fill="#9B5FB8" opacity="0.92">
+    <rect x="20" y="120" width="80" height="80"/>
+    <rect x="120" y="110" width="60" height="90"/>
+    <polygon points="200,200 200,125 245,95 290,125 290,200"/>
+    <rect x="420" y="120" width="100" height="80"/>
+    <rect x="940" y="120" width="70" height="80"/>
+    <rect x="1040" y="105" width="130" height="95"/>
+  </g>
+  <g fill="#581a69">
+    <rect x="0" y="100" width="90" height="100"/>
+    <polygon points="110,200 110,110 145,80 180,110 180,200"/>
+    <rect x="210" y="95" width="100" height="105"/>
+    <rect x="235" y="70" width="50" height="25"/>
+    <rect x="340" y="85" width="60" height="115"/>
+    <rect x="368" y="65" width="4" height="20"/>
+    <rect x="430" y="95" width="70" height="105" rx="14"/>
+    <rect x="600" y="150" width="46" height="50"/>
+    <rect x="830" y="90" width="80" height="110"/>
+    <polygon points="930,200 930,100 972,72 1014,100 1014,200"/>
+    <rect x="1050" y="95" width="150" height="105"/>
+    <rect x="1118" y="75" width="4" height="20"/>
+  </g>
+  <g stroke="#581a69" stroke-width="2" fill="none">
+    <line x1="584" y1="92" x2="580" y2="178"/>
+    <line x1="584" y1="92" x2="650" y2="178"/>
+    <line x1="584" y1="92" x2="560" y2="178"/>
+    <line x1="764" y1="92" x2="768" y2="178"/>
+    <line x1="764" y1="92" x2="700" y2="178"/>
+    <line x1="764" y1="92" x2="820" y2="178"/>
+  </g>
+  <g fill="#581a69">
+    <rect x="580" y="90" width="8" height="95"/>
+    <rect x="760" y="90" width="8" height="95"/>
+    <rect x="560" y="178" width="260" height="6"/>
+  </g>
+  <g fill="#E8D6F0" opacity="0.9">
+    <rect x="250" y="186" width="46" height="14" rx="4"/>
+    <rect x="258" y="180" width="24" height="8" rx="2"/>
+    <circle cx="260" cy="200" r="6"/>
+    <circle cx="286" cy="200" r="6"/>
+  </g>
+`;
+
+const FOREST_BANNER_SVG = `
+  <rect x="0" y="0" width="1200" height="200" fill="#0A1F14"/>
+  <circle cx="1080" cy="45" r="20" fill="#DFF5E4" opacity="0.85"/>
+  <g stroke="#DFF5E4" stroke-width="2" fill="none" opacity="0.75">
+    <path d="M 300 42 q 8 -10 16 0 q 8 -10 16 0"/>
+    <path d="M 520 68 q 7 -8 14 0 q 7 -8 14 0"/>
+  </g>
+  <g fill="#8FCBA0" opacity="0.75">
+    <polygon points="10,200 26,158 42,200"/>
+    <polygon points="90,200 106,150 122,200"/>
+    <polygon points="175,200 191,160 207,200"/>
+    <polygon points="260,200 276,150 292,200"/>
+    <polygon points="345,200 361,158 377,200"/>
+    <polygon points="430,200 446,150 462,200"/>
+    <polygon points="560,200 576,158 592,200"/>
+    <polygon points="645,200 661,150 677,200"/>
+    <polygon points="730,200 746,158 762,200"/>
+    <polygon points="815,200 831,150 847,200"/>
+    <polygon points="900,200 916,158 932,200"/>
+    <polygon points="1000,200 1016,150 1032,200"/>
+    <polygon points="1085,200 1101,158 1117,200"/>
+    <polygon points="1160,200 1176,150 1192,200"/>
+  </g>
+  <g fill="#4FA868" opacity="0.95">
+    <rect x="112" y="184" width="8" height="14"/>
+    <polygon points="90,186 116,150 142,186"/>
+    <polygon points="98,158 116,128 134,158"/>
+    <polygon points="235,200 251,110 267,200"/>
+    <rect x="386" y="182" width="8" height="16"/>
+    <polygon points="362,184 390,145 418,184"/>
+    <polygon points="371,155 390,122 409,155"/>
+    <polygon points="605,200 621,105 637,200"/>
+    <rect x="756" y="184" width="8" height="14"/>
+    <polygon points="734,186 760,150 786,186"/>
+    <polygon points="742,158 760,128 778,158"/>
+    <polygon points="975,200 991,108 1007,200"/>
+    <rect x="1116" y="182" width="8" height="16"/>
+    <polygon points="1092,184 1120,145 1148,184"/>
+    <polygon points="1101,155 1120,122 1139,155"/>
+  </g>
+  <g fill="#008037">
+    <polygon points="45,200 60,55 75,200"/>
+    <rect x="170" y="182" width="10" height="18"/>
+    <polygon points="140,184 175,132 210,184"/>
+    <polygon points="151,150 175,112 199,150"/>
+    <polygon points="160,120 175,95 190,120"/>
+    <polygon points="325,200 340,60 355,200"/>
+    <rect x="470" y="180" width="10" height="20"/>
+    <polygon points="438,182 475,128 512,182"/>
+    <polygon points="449,148 475,108 501,148"/>
+    <polygon points="459,118 475,90 491,118"/>
+    <polygon points="695,200 710,50 725,200"/>
+    <rect x="855" y="182" width="10" height="18"/>
+    <polygon points="825,184 860,132 895,184"/>
+    <polygon points="836,150 860,112 884,150"/>
+    <polygon points="845,120 860,95 875,120"/>
+    <polygon points="1050,200 1065,58 1080,200"/>
+  </g>
+`;
+
+const BEACH_BANNER_SVG = `
+  <rect x="0" y="0" width="1200" height="200" fill="#2B0F00"/>
+  <circle cx="620" cy="60" r="30" fill="#FFC98A"/>
+  <g fill="#FFB47A" opacity="0.55">
+    <path d="M0,130 Q60,115 120,130 T240,130 T360,130 T480,130 T600,130 T720,130 T840,130 T960,130 T1080,130 T1200,130 L1200,200 L0,200 Z"/>
+  </g>
+  <g fill="#FF9A47" opacity="0.8">
+    <path d="M0,155 Q55,138 110,155 T220,155 T330,155 T440,155 T550,155 T660,155 T770,155 T880,155 T990,155 T1100,155 T1200,155 L1200,200 L0,200 Z"/>
+  </g>
+  <g fill="#D9530F">
+    <path d="M0,178 Q50,163 100,178 T200,178 T300,178 T400,178 T500,178 T600,178 T700,178 T800,178 T900,178 T1000,178 T1100,178 T1200,178 L1200,200 L0,200 Z"/>
+  </g>
+  <g fill="#762F02">
+    <rect x="900" y="108" width="300" height="10"/>
+    <rect x="920" y="118" width="8" height="72"/>
+    <rect x="1000" y="118" width="8" height="72"/>
+    <rect x="1080" y="118" width="8" height="72"/>
+    <rect x="1160" y="118" width="8" height="72"/>
+  </g>
+  <g>
+    <path d="M140,200 Q133,150 146,103 Q150,93 154,103 Q167,150 160,200 Z" fill="#FF751F"/>
+    <rect x="148" y="115" width="4" height="70" fill="#762F02"/>
+  </g>
+`;
+
+const THEMES = {
+  mountains: { accent: '#38b6ff', defaultSectionColor: '#38b6ff', pinnedColor: '#1E7FB0', banner: MOUNTAIN_BANNER_SVG },
+  city: { accent: '#9B3FBF', defaultSectionColor: '#9B3FBF', pinnedColor: '#581a69', banner: CITY_BANNER_SVG },
+  forest: { accent: '#2ECC71', defaultSectionColor: '#2ECC71', pinnedColor: '#008037', banner: FOREST_BANNER_SVG },
+  beach: { accent: '#FF751F', defaultSectionColor: '#FF751F', pinnedColor: '#762F02', banner: BEACH_BANNER_SVG }
+};
+
+function applyTheme(themeName){
+  const theme = THEMES[themeName] || THEMES.mountains;
+  document.documentElement.style.setProperty('--accent', theme.accent);
+  DEFAULT_SECTION_COLOR = theme.defaultSectionColor;
+  PINNED_SECTION_COLOR = theme.pinnedColor;
+  const bannerEl = document.querySelector('.hero-banner svg');
+  if(bannerEl) bannerEl.innerHTML = theme.banner;
+}
 const PALETTE = ['#38b6ff', '#2bf645', '#ff38D3', '#f8fd11', '#ff8d08'];
 function getDayColor(day){
   const key = (day.label || '').trim().toUpperCase();
@@ -396,6 +588,7 @@ async function load(){
     if(key === 'NEW' || key === 'BASECAMP') d.label = 'TASKS';
   });
   ensureTasksSection();
+  applyTheme(data.theme || 'mountains');
   document.getElementById('appTitle').textContent = data.appTitle || todaysDateTitle();
   render();
   renderTrash();
@@ -1361,31 +1554,33 @@ function rebuildFromDOM(){
   render();
 }
 
-document.getElementById('addDayBtn').addEventListener('click', ()=>{
-  document.getElementById('dayForm').classList.toggle('hidden');
-  document.getElementById('newDayInput').focus();
+document.getElementById('resetAppBtn').addEventListener('click', ()=>{
+  const ok = confirm('Reset this app? This permanently deletes every task, section, and setting on this device and starts fresh, like a brand-new install. This cannot be undone.');
+  if(!ok) return;
+  recentlyAddedDayIds.clear();
+  data = defaultData();
+  save();
+  document.getElementById('appTitle').textContent = data.appTitle || todaysDateTitle();
+  render();
+  renderTrash();
+  renderCompleted();
 });
-document.getElementById('cancelDayBtn').addEventListener('click', ()=>{
-  document.getElementById('dayForm').classList.add('hidden');
-  document.getElementById('newDayInput').value = '';
-});
-document.getElementById('confirmDayBtn').addEventListener('click', addDayFromInput);
-document.getElementById('newDayInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addDayFromInput(); });
-preventIOSZoom(document.getElementById('newDayInput'));
 
-function addDayFromInput(){
-  const input = document.getElementById('newDayInput');
-  const val = input.value.trim();
-  if(val){
-    const newDay = { id: uid(), label: val, tasks: [] };
-    data.days.push(newDay);
-    recentlyAddedDayIds.add(newDay.id);
+document.getElementById('themesBtn').addEventListener('click', ()=>{
+  document.getElementById('themePicker').classList.toggle('hidden');
+  document.querySelectorAll('.theme-option').forEach(btn=>{
+    btn.classList.toggle('selected', btn.dataset.theme === (data.theme || 'mountains'));
+  });
+});
+document.querySelectorAll('.theme-option').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    data.theme = btn.dataset.theme;
+    applyTheme(data.theme);
     save();
     render();
-  }
-  input.value = '';
-  document.getElementById('dayForm').classList.add('hidden');
-}
+    document.getElementById('themePicker').classList.add('hidden');
+  });
+});
 
 function ensureTasksSection(){
   let section = data.days.find(d => (d.label || '').trim().toUpperCase() === 'TASKS');
